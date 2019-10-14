@@ -1,13 +1,8 @@
 package conversion
 
 import (
-	"bufio"
-	"crypto/sha1"
-	"encoding/hex"
 	"fmt"
-	"io"
 	"net/url"
-	"os"
 	"sync"
 	"time"
 
@@ -40,7 +35,7 @@ var tables struct {
 	table map[string]interface{}
 }
 
-var globalDatabase *xorm.Engine
+var _database *xorm.Engine
 
 // ShowSQLOptions ...
 func ShowSQLOptions(b bool) ConfigOptions {
@@ -103,20 +98,6 @@ func (d *dbConfig) source() string {
 		d.username, d.password, d.addr, d.schema, d.location, d.charset)
 }
 
-// SyncTable ...
-func SyncTable(engine *xorm.Engine) (e error) {
-
-}
-
-// Tables ...
-func Tables() []interface{} {
-	var r []interface{}
-	for _, tb := range syncTable {
-		r = append(r, tb)
-	}
-	return r
-}
-
 func liteSource(name string) string {
 	return fmt.Sprintf("file:%s?cache=shared&mode=rwc&_journal_mode=WAL", name)
 }
@@ -148,8 +129,14 @@ type Model struct {
 	Version   int        `xorm:"version"`
 }
 
+// Table ...
+func (m *Model) Table() *xorm.Session {
+	panic("implement me")
+}
+
 // Modeler ...
 type Modeler interface {
+	Table() *xorm.Session
 	GetID() string
 	SetID(string)
 	GetVersion() int
@@ -166,26 +153,9 @@ func (m *Model) BeforeInsert() {
 // MustSession ...
 func MustSession(session *xorm.Session) *xorm.Session {
 	if session == nil {
-		panic("nil session")
+		panic("session is nil")
 	}
 	return session
-}
-
-// Checksum ...
-func Checksum(filepath string) string {
-	hash := sha1.New()
-	file, e := os.Open(filepath)
-	if e != nil {
-		return ""
-	}
-	defer file.Close()
-	reader := bufio.NewReader(file)
-	_, e = io.Copy(hash, reader)
-	if e != nil {
-		return ""
-	}
-
-	return hex.EncodeToString(hash.Sum(nil))
 }
 
 // IsExist ...
