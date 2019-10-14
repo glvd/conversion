@@ -1,5 +1,10 @@
 package conversion
 
+import (
+	"context"
+	"strings"
+)
+
 // Extend ...
 type Extend struct {
 	Path    string `json:"path"`
@@ -48,4 +53,62 @@ type VideoSource struct {
 	Caption      string    `json:"caption"`       //字幕
 	MagnetLinks  []string  `json:"magnet_links"`  //磁链
 	Uncensored   bool      `json:"uncensored"`    //有码,无码
+}
+
+// Run ...
+func (v VideoSource) Run(ctx context.Context) (e error) {
+
+}
+
+// Video ...
+func (v VideoSource) Video() *Video {
+	//always not null
+	alias := ""
+	if len(v.Alias) > 0 {
+		alias = v.Alias[0]
+	}
+	//always not null
+	role := ""
+	if len(v.Role) > 0 {
+		role = v.Role[0]
+	}
+
+	intro := v.Intro
+	if intro == "" {
+		intro = alias + " " + role
+	}
+
+	return &Video{
+		Model:        Model{},
+		BanNo:        strings.ToUpper(v.Bangumi),
+		Intro:        intro,
+		Alias:        v.Alias,
+		ThumbHash:    "",
+		PosterHash:   "",
+		SourceHash:   "",
+		M3U8Hash:     "",
+		Key:          "",
+		M3U8:         "",
+		Role:         v.Role,
+		Director:     v.Director,
+		Systematics:  v.Systematics,
+		Season:       MustString(v.Season, "1"),
+		Episode:      MustString(v.Episode, "1"),
+		TotalEpisode: MustString(v.TotalEpisode, "1"),
+		Format:       MustString(v.Format, "2D"),
+		Producer:     v.Producer,
+		Publisher:    v.Publisher,
+		Type:         v.Type,
+		Language:     v.Language,
+		Caption:      v.Caption,
+		Group:        "",
+		Index:        "",
+		Date:         v.Date,
+		Sharpness:    v.Sharpness,
+		Series:       v.Series,
+		Tags:         v.Tags,
+		Length:       v.Length,
+		Sample:       nil,
+		Uncensored:   false,
+	}
 }

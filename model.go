@@ -174,3 +174,11 @@ func IsExist(session *xorm.Session, table interface{}) bool {
 func UUID() uuid.UUID {
 	return uuid.Must(uuid.NewUUID())
 }
+
+// MustString  must string
+func MustString(val, src string) string {
+	if val != "" {
+		return val
+	}
+	return src
+}
