@@ -3,7 +3,6 @@ package conversion
 import (
 	"fmt"
 	"net/url"
-	"sync"
 	"time"
 
 	"github.com/go-xorm/xorm"
@@ -11,6 +10,15 @@ import (
 )
 
 const mysqlStatement = "%s:%s@tcp(%s)/%s?loc=%s&charset=%s&parseTime=true"
+
+// Model ...
+type Model struct {
+	ID        string     `xorm:"id pk"`
+	CreatedAt time.Time  `xorm:"created_at created"`
+	UpdatedAt time.Time  `xorm:"updated_at updated"`
+	DeletedAt *time.Time `xorm:"deleted_at deleted"`
+	Version   int        `xorm:"version"`
+}
 
 // DatabaseConfig ...
 type dbConfig struct {
@@ -27,13 +35,17 @@ type dbConfig struct {
 	location     string
 }
 
+// Modeler ...
+type Modeler interface {
+	Table() *xorm.Session
+	GetID() string
+	SetID(string)
+	GetVersion() int
+	SetVersion(int)
+}
+
 // ConfigOptions ...
 type ConfigOptions func(config *dbConfig)
-
-var tables struct {
-	sync.Mutex
-	table map[string]interface{}
-}
 
 var _database *xorm.Engine
 
@@ -120,27 +132,33 @@ func MustDatabase(engine *xorm.Engine, err error) *xorm.Engine {
 	return engine
 }
 
-// Model ...
-type Model struct {
-	ID        string     `xorm:"id pk"`
-	CreatedAt time.Time  `xorm:"created_at created"`
-	UpdatedAt time.Time  `xorm:"updated_at updated"`
-	DeletedAt *time.Time `xorm:"deleted_at deleted"`
-	Version   int        `xorm:"version"`
+// GetID ...
+func (m Model) GetID() string {
+	return m.ID
 }
 
-// Table ...
-func (m *Model) Table() *xorm.Session {
-	panic("implement me")
+// SetID ...
+func (m *Model) SetID(id string) {
+	m.ID = id
 }
 
-// Modeler ...
-type Modeler interface {
-	Table() *xorm.Session
-	GetID() string
-	SetID(string)
-	GetVersion() int
-	SetVersion(int)
+// GetVersion ...
+func (m Model) GetVersion() int {
+	return m.Version
+}
+
+// SetVersion ...
+func (m *Model) SetVersion(v int) {
+	m.Version = v
+}
+
+// InsertOrUpdate ...
+func InsertOrUpdate(modeler Modeler) (i int64, e error) {
+	i, e = modeler.Table().InsertOne(modeler)
+	if e != nil {
+		return 0, e
+	}
+	return i, e
 }
 
 // BeforeInsert ...

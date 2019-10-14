@@ -6,6 +6,8 @@ import (
 	"encoding/hex"
 	"io"
 	"os"
+
+	"github.com/go-xorm/xorm"
 )
 
 // Video ...
@@ -44,6 +46,11 @@ type Video struct {
 	Uncensored   bool      `json:"uncensored"`                     //有码,无码
 	//MagnetLinks  []string  `json:"-"`                              //磁链
 	//Visit        uint64    `json:"-" xorm:"notnull default(0)"`    //访问数
+}
+
+// Table ...
+func (v *Video) Table() *xorm.Session {
+	return _database.Table(&Video{})
 }
 
 // IVideo ...
