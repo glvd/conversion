@@ -57,7 +57,7 @@ type VideoSource struct {
 
 // Run ...
 func (v VideoSource) Run(ctx context.Context) (e error) {
-
+	return
 }
 
 // Video ...

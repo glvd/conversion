@@ -6,8 +6,10 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
 	"github.com/google/uuid"
+	"github.com/mattn/go-sqlite3"
 )
 
 const mysqlStatement = "%s:%s@tcp(%s)/%s?loc=%s&charset=%s&parseTime=true"
@@ -54,8 +56,10 @@ type ISync interface {
 type ConfigOptions func(config *dbConfig)
 
 var (
+	_              = mysql.Config{}
+	_              = sqlite3.Error{}
 	_database      *xorm.Engine
-	_databaseTable map[string]IModel
+	_databaseTable map[string]ISync
 )
 
 // ShowSQLOptions ...
@@ -119,6 +123,33 @@ func (d *dbConfig) source() string {
 		d.username, d.password, d.addr, d.schema, d.location, d.charset)
 }
 
+// GetID ...
+func (m Model) GetID() string {
+	return m.ID
+}
+
+// SetID ...
+func (m *Model) SetID(id string) {
+	m.ID = id
+}
+
+// GetVersion ...
+func (m Model) GetVersion() int {
+	return m.Version
+}
+
+// SetVersion ...
+func (m *Model) SetVersion(v int) {
+	m.Version = v
+}
+
+// BeforeInsert ...
+func (m *Model) BeforeInsert() {
+	if m.ID == "" {
+		m.ID = UUID().String()
+	}
+}
+
 func liteSource(name string) string {
 	return fmt.Sprintf("file:%s?cache=shared&mode=rwc&_journal_mode=WAL", name)
 }
@@ -149,31 +180,21 @@ func RegisterDatabase(engine *xorm.Engine) {
 }
 
 // RegisterTable ...
-func RegisterTable(m IModel) {
+func RegisterTable(m ISync) {
 	if _databaseTable == nil {
-		_databaseTable = make(map[string]IModel)
+		_databaseTable = make(map[string]ISync)
 	}
 	_databaseTable[reflect.TypeOf(m).Name()] = m
 }
 
-// GetID ...
-func (m Model) GetID() string {
-	return m.ID
-}
-
-// SetID ...
-func (m *Model) SetID(id string) {
-	m.ID = id
-}
-
-// GetVersion ...
-func (m Model) GetVersion() int {
-	return m.Version
-}
-
-// SetVersion ...
-func (m *Model) SetVersion(v int) {
-	m.Version = v
+// SyncTable ...
+func SyncTable() (e error) {
+	for _, v := range _databaseTable {
+		if err := v.Sync(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // InsertOrUpdate ...
@@ -183,13 +204,6 @@ func InsertOrUpdate(m IModel) (i int64, e error) {
 		return 0, e
 	}
 	return i, e
-}
-
-// BeforeInsert ...
-func (m *Model) BeforeInsert() {
-	if m.ID == "" {
-		m.ID = UUID().String()
-	}
 }
 
 // MustSession ...

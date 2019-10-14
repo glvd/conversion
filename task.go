@@ -14,6 +14,6 @@ type Task struct {
 }
 
 // AddWalker ...
-func (t Task) AddWalker(walker IWalker) {
+func (t Task) AddWalker(walk IWalk) {
 
 }

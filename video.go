@@ -48,6 +48,11 @@ type Video struct {
 	//Visit        uint64    `json:"-" xorm:"notnull default(0)"`    //访问数
 }
 
+// Sync ...
+func (v *Video) Sync() error {
+	return _database.Sync2(v)
+}
+
 // Table ...
 func (v *Video) Table() *xorm.Session {
 	return _database.Table(&Video{})
