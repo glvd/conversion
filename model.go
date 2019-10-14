@@ -38,6 +38,11 @@ type dbConfig struct {
 	location     string
 }
 
+// BeforeInsert ...
+type BeforeInsert interface {
+	BeforeInsert()
+}
+
 // IModel ...
 type IModel interface {
 	Table() *xorm.Session
@@ -179,8 +184,8 @@ func RegisterDatabase(engine *xorm.Engine) {
 	}
 }
 
-// RegisterTable ...
-func RegisterTable(m ISync) {
+// registerTable ...
+func registerTable(m ISync) {
 	if _databaseTable == nil {
 		_databaseTable = make(map[string]ISync)
 	}
