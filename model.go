@@ -3,6 +3,7 @@ package conversion
 import (
 	"fmt"
 	"net/url"
+	"reflect"
 	"time"
 
 	"github.com/go-xorm/xorm"
@@ -35,8 +36,8 @@ type dbConfig struct {
 	location     string
 }
 
-// Modeler ...
-type Modeler interface {
+// IModel ...
+type IModel interface {
 	Table() *xorm.Session
 	GetID() string
 	SetID(string)
@@ -44,10 +45,18 @@ type Modeler interface {
 	SetVersion(int)
 }
 
+// ISync ...
+type ISync interface {
+	Sync() error
+}
+
 // ConfigOptions ...
 type ConfigOptions func(config *dbConfig)
 
-var _database *xorm.Engine
+var (
+	_database      *xorm.Engine
+	_databaseTable map[string]IModel
+)
 
 // ShowSQLOptions ...
 func ShowSQLOptions(b bool) ConfigOptions {
@@ -80,7 +89,7 @@ func LoginOption(addr, user, pass string) ConfigOptions {
 }
 
 // InitMySQL ...
-func InitMySQL(ops ...ConfigOptions) *xorm.Engine {
+func InitMySQL(ops ...ConfigOptions) (*xorm.Engine, error) {
 	config := &dbConfig{
 		showSQL:  true,
 		useCache: true,
@@ -99,9 +108,9 @@ func InitMySQL(ops ...ConfigOptions) *xorm.Engine {
 
 	engine, e := xorm.NewEngine(config.dbType, config.source())
 	if e != nil {
-		panic(e)
+		return nil, e
 	}
-	return engine
+	return engine, nil
 }
 
 // Source ...
@@ -132,6 +141,21 @@ func MustDatabase(engine *xorm.Engine, err error) *xorm.Engine {
 	return engine
 }
 
+// RegisterDatabase ...
+func RegisterDatabase(engine *xorm.Engine) {
+	if _database == nil {
+		_database = engine
+	}
+}
+
+// RegisterTable ...
+func RegisterTable(m IModel) {
+	if _databaseTable == nil {
+		_databaseTable = make(map[string]IModel)
+	}
+	_databaseTable[reflect.TypeOf(m).Name()] = m
+}
+
 // GetID ...
 func (m Model) GetID() string {
 	return m.ID
@@ -153,8 +177,8 @@ func (m *Model) SetVersion(v int) {
 }
 
 // InsertOrUpdate ...
-func InsertOrUpdate(modeler Modeler) (i int64, e error) {
-	i, e = modeler.Table().InsertOne(modeler)
+func InsertOrUpdate(m IModel) (i int64, e error) {
+	i, e = m.Table().InsertOne(m)
 	if e != nil {
 		return 0, e
 	}
@@ -177,10 +201,9 @@ func MustSession(session *xorm.Session) *xorm.Session {
 }
 
 // IsExist ...
-func IsExist(session *xorm.Session, table interface{}) bool {
-	i, e := session.Table(table).
-		//Where("checksum = ?", unfin.Checksum).
-		//Where("type = ?", unfin.Type).
+func IsExist(m IModel) bool {
+	i, e := m.Table().
+		Where("id = ?", m.GetID()).
 		Count()
 	if e != nil || i <= 0 {
 		return false
