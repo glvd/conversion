@@ -99,8 +99,10 @@ func (s *sourceWalk) Run(ctx context.Context) (e error) {
 		return e
 	}
 	if i == 0 {
-		log.e
+		log.With("id", s.ID()).Warn("not updated")
 	}
+
+	return nil
 }
 
 // SourceWalk ...
