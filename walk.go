@@ -96,7 +96,7 @@ func (w *Walk) Store() error {
 	if err != nil {
 		return err
 	}
-	if !b {
+	if b {
 		log.With("id", w.ID()).Warn("store")
 		return nil
 	}
