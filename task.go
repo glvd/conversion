@@ -3,10 +3,8 @@ package conversion
 import (
 	"context"
 	"encoding/json"
-	"sync"
-	"time"
-
 	"github.com/gocacher/cacher"
+	"sync"
 )
 
 // RunType ...
@@ -21,6 +19,7 @@ const (
 // Task ...
 type Task struct {
 	Context context.Context
+	running sync.Map
 	queue   sync.Pool
 }
 
@@ -80,13 +79,20 @@ func (t *Task) Start() error {
 					log.Error(e)
 					continue
 				}
-				log.With("id", walk.ID()).Info(walk)
+				_, b := t.running.LoadOrStore(walk.ID(), nil)
+				if b && walk.Status() != WalkWaiting {
+					e := walk.Reset()
+					if e != nil {
+						log.With("id", walk.ID()).Error("reset:", e)
+					}
+				}
+				log.With("id", walk.ID()).Info("queue")
 				e = walk.Run(t.Context)
 				if e != nil {
-					log.Error(e)
+					log.With("id", walk.ID()).Error("run:", e)
 				}
 			}
-			time.Sleep(1 * time.Second)
+			//time.Sleep(1 * time.Second)
 			continue
 		}
 		break

@@ -34,8 +34,10 @@ type Walk struct {
 type IWalk interface {
 	ID() string
 	Walk() Walk
+	Update() error
 	Store() error
 	Reset() error
+	Status() WalkStatus
 	Run(ctx context.Context) (e error)
 }
 
@@ -61,8 +63,12 @@ func dummy(v []byte) error {
 
 // Reset ...
 func (w *Walk) Reset() error {
-	w.Status = WalkWaiting
+	w.WalkImpl.Status = WalkWaiting
 	return w.Store()
+}
+
+func (w *Walk) Status() WalkStatus {
+	return w.WalkImpl.Status
 }
 
 // Walk ...
@@ -103,6 +109,14 @@ func (w *Walk) Store() error {
 	return cacher.Set(w.ID(), bytes)
 }
 
+func (w *Walk) Update() error {
+	bytes, e := json.Marshal(w)
+	if e != nil {
+		return e
+	}
+	return cacher.Set(w.ID(), bytes)
+}
+
 // Run ...
 func (w *Walk) Run(ctx context.Context) (e error) {
 	switch w.WalkImpl.Status {
@@ -114,7 +128,7 @@ func (w *Walk) Run(ctx context.Context) (e error) {
 		return nil
 	case WalkWaiting:
 		w.WalkImpl.Status = WalkRunning
-		if err := w.Store(); err != nil {
+		if err := w.Update(); err != nil {
 			return err
 		}
 	default:
@@ -125,5 +139,14 @@ func (w *Walk) Run(ctx context.Context) (e error) {
 	if !b {
 		fn = dummy
 	}
-	return fn(w.Value)
+	e = fn(w.Value)
+	if e != nil {
+		return e
+	}
+
+	w.WalkImpl.Status = WalkFinish
+	if err := w.Update(); err != nil {
+		return err
+	}
+	return nil
 }
