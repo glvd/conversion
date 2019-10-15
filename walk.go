@@ -21,6 +21,8 @@ type Walk struct {
 
 // IWalk ...
 type IWalk interface {
-	LoadWalk() Walk
+	Walk() Walk
+	LoadWalk() error
+	Store() error
 	Run(ctx context.Context) (e error)
 }

@@ -24,7 +24,6 @@ type Task struct {
 
 // AddWalker ...
 func (t *Task) AddWalker(walk IWalk) {
-	t.walk[walk.ID()] = walk
 }
 
 // Start ...
