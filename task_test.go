@@ -11,11 +11,14 @@ import (
 func TestTask_Start(t *testing.T) {
 	task := NewTask()
 	for i := 0; i < 1000; i++ {
-		id := tool.GenerateRandomString(64)
-		v := NewSourceWalk(&VideoSource{
+		id := tool.GenerateRandomString(3)
+		v, e := NewSourceWalk(&VideoSource{
 			Bangumi: id,
 		})
-		e := task.AddWalker(v)
+		if e != nil {
+			t.Fatal(e)
+		}
+		e = task.AddWalker(v)
 		if e != nil {
 			t.Fatal(e)
 		}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"sync"
+	"time"
 
 	"github.com/gocacher/cacher"
 )
@@ -86,9 +87,12 @@ func (t *Task) Start() error {
 					log.Error(e)
 				}
 			}
+			time.Sleep(1 * time.Second)
+			continue
 		}
 		break
 	}
+	log.Info("end")
 	return nil
 }
 

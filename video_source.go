@@ -1,6 +1,7 @@
 package conversion
 
 import (
+	"encoding/json"
 	"strings"
 )
 
@@ -55,22 +56,35 @@ type VideoSource struct {
 }
 
 // NewSourceWalk ...
-func NewSourceWalk(source *VideoSource) IWalk {
+func NewSourceWalk(source *VideoSource) (IWalk, error) {
+	bytes, e := json.Marshal(source)
+	if e != nil {
+		return nil, e
+	}
 	return &Walk{
 		WalkImpl: WalkImpl{
 			ID:       source.Bangumi,
 			WalkType: "source",
 			Status:   WalkWaiting,
-			Value:    source,
-		}}
+			Value:    bytes,
+		}}, nil
+}
+
+func decodeSource(src []byte) (*VideoSource, error) {
+	var source VideoSource
+	e := json.Unmarshal(src, &source)
+	if e != nil {
+		return nil, e
+	}
+	return &source, nil
 }
 
 // SourceProcess ...
-func SourceProcess(src interface{}) error {
+func SourceProcess(src []byte) error {
 	log.Info("source process run")
-	source, b := src.(*VideoSource)
-	if source == nil || !b {
-		return ErrWrongCastType
+	source, e := decodeSource(src)
+	if e != nil {
+		return e
 	}
 	v := source.Video()
 	i, e := InsertOrUpdate(v)

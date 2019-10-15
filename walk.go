@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-
 	"github.com/gocacher/cacher"
 )
 
@@ -23,7 +22,7 @@ type WalkImpl struct {
 	ID       string
 	WalkType string
 	Status   WalkStatus
-	Value    interface{}
+	Value    []byte
 }
 
 // Walk ...
@@ -47,7 +46,7 @@ var ErrWalkFinish = errors.New("walk was finished")
 var ErrWrongCastType = errors.New("something wrong when cast to type")
 
 // VideoProcessFunc ...
-type VideoProcessFunc func(v interface{}) error
+type VideoProcessFunc func(src []byte) error
 
 // WalkRunProcessFunction ...
 var WalkRunProcessFunction = map[string]VideoProcessFunc{
@@ -55,7 +54,7 @@ var WalkRunProcessFunction = map[string]VideoProcessFunc{
 	"info":   nil,
 }
 
-func dummy(v interface{}) error {
+func dummy(v []byte) error {
 	log.Panic(v)
 	return nil
 }
@@ -92,6 +91,14 @@ func (w *Walk) Store() error {
 	bytes, e := json.Marshal(w)
 	if e != nil {
 		return e
+	}
+	b, err := cacher.Has(w.ID())
+	if err != nil {
+		return err
+	}
+	if !b {
+		log.With("id", w.ID()).Warn("store")
+		return nil
 	}
 	return cacher.Set(w.ID(), bytes)
 }
