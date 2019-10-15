@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"sync"
 
-	"github.com/go-cacher/cacher"
+	"github.com/gocacher/cacher"
 )
 
 // RunType ...

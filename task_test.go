@@ -4,14 +4,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/godcong/go-trait"
+	"github.com/gotrait/tool"
 )
 
 // TestTask_Start ...
 func TestTask_Start(t *testing.T) {
 	task := NewTask()
 	for i := 0; i < 1000; i++ {
-		id := trait.GenerateRandomString(64)
+		id := tool.GenerateRandomString(64)
 		v := NewSourceWalk(&VideoSource{
 			Bangumi: id,
 		})

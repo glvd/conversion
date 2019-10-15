@@ -1,7 +1,7 @@
 package conversion
 
 import (
-	"github.com/go-cacher/badger-cache"
+	"github.com/gocacher/badger-cache"
 )
 
 var _ = cache.BadgerCache{}

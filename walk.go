@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/go-cacher/cacher"
+	"github.com/gocacher/cacher"
 )
 
 // WalkRunning ...
