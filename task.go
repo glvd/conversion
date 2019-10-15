@@ -34,20 +34,27 @@ func StoreTask(s []string) error {
 
 // LoadTask ...
 func LoadTask() ([]string, error) {
-	bytes, e := cacher.Get("task")
-	if e != nil {
-		panic(e)
-	}
-	var s []string
-	e = json.Unmarshal(bytes, &s)
+	b, e := cacher.Has("task")
 	if e != nil {
 		return nil, e
+	}
+	var s []string
+	if b {
+		bytes, e := cacher.Get("task")
+		if e != nil {
+			return nil, e
+		}
+		e = json.Unmarshal(bytes, &s)
+		if e != nil {
+			return nil, e
+		}
 	}
 	return s, nil
 }
 
 // AddWalker ...
 func (t *Task) AddWalker(walk IWalk) error {
+	log.With("id", walk.Walk().ID()).Info("add walk")
 	if err := walk.Store(); err != nil {
 		return err
 	}
@@ -78,8 +85,9 @@ func (t *Task) Start() error {
 				}
 			}
 		}
+		break
 	}
-
+	return nil
 }
 
 // NewTask ...

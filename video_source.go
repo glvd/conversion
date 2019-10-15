@@ -58,14 +58,16 @@ type VideoSource struct {
 func NewSourceWalk(source *VideoSource) IWalk {
 	return &Walk{
 		walk: walk{
-			ID:     source.Bangumi,
-			Status: WalkWaiting,
-			Value:  source,
+			ID:       source.Bangumi,
+			WalkType: "source",
+			Status:   WalkWaiting,
+			Value:    source,
 		}}
 }
 
 // SourceProcess ...
 func SourceProcess(src interface{}) error {
+	log.Info("source process run")
 	source, b := src.(*VideoSource)
 	if b {
 		return ErrWrongCastType
@@ -75,6 +77,10 @@ func SourceProcess(src interface{}) error {
 	if e != nil {
 		return e
 	}
+	if i == 0 {
+		log.With("id", source.Bangumi).Warn("not updated")
+	}
+	return nil
 }
 
 // Video ...

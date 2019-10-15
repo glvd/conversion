@@ -33,6 +33,7 @@ type Walk struct {
 
 // IWalk ...
 type IWalk interface {
+	ID() string
 	Walk() Walk
 	Store() error
 	Reset() error
@@ -83,7 +84,7 @@ func LoadWalk(id string) (*Walk, error) {
 
 // ID ...
 func (w Walk) ID() string {
-	return w.ID()
+	return w.walk.ID
 }
 
 // Store ...
