@@ -15,12 +15,17 @@ import (
 const mysqlStatement = "%s:%s@tcp(%s)/%s?loc=%s&charset=%s&parseTime=true"
 
 // Model ...
-type Model struct {
+type model struct {
 	ID        string     `xorm:"id pk"`
 	CreatedAt time.Time  `xorm:"created_at created"`
 	UpdatedAt time.Time  `xorm:"updated_at updated"`
 	DeletedAt *time.Time `xorm:"deleted_at deleted"`
 	Version   int        `xorm:"version"`
+}
+
+// Model ...
+type Model struct {
+	model `xorm:"extends"`
 }
 
 // DatabaseConfig ...
@@ -46,9 +51,9 @@ type BeforeInsert interface {
 // IModel ...
 type IModel interface {
 	Table() *xorm.Session
-	GetID() string
+	ID() string
 	SetID(string)
-	GetVersion() int
+	Version() int
 	SetVersion(int)
 }
 
@@ -128,30 +133,30 @@ func (d *dbConfig) source() string {
 		d.username, d.password, d.addr, d.schema, d.location, d.charset)
 }
 
-// GetID ...
-func (m Model) GetID() string {
-	return m.ID
+// ID ...
+func (m Model) ID() string {
+	return m.model.ID
 }
 
 // SetID ...
 func (m *Model) SetID(id string) {
-	m.ID = id
+	m.model.ID = id
 }
 
-// GetVersion ...
-func (m Model) GetVersion() int {
-	return m.Version
+// Version ...
+func (m Model) Version() int {
+	return m.model.Version
 }
 
 // SetVersion ...
 func (m *Model) SetVersion(v int) {
-	m.Version = v
+	m.model.Version = v
 }
 
 // BeforeInsert ...
 func (m *Model) BeforeInsert() {
-	if m.ID == "" {
-		m.ID = UUID().String()
+	if m.model.ID == "" {
+		m.model.ID = UUID().String()
 	}
 }
 
@@ -222,7 +227,7 @@ func MustSession(session *xorm.Session) *xorm.Session {
 // IsExist ...
 func IsExist(m IModel) bool {
 	i, e := m.Table().
-		Where("id = ?", m.GetID()).
+		Where("id = ?", m.ID()).
 		Count()
 	if e != nil || i <= 0 {
 		return false

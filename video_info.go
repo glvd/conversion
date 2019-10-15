@@ -1,5 +1,9 @@
 package conversion
 
+// FileWalk ...
+type FileWalk struct {
+}
+
 // VideoInfo ...
 type VideoInfo struct {
 	From          string    `json:"From"`          //来源

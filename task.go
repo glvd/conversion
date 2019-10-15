@@ -1,5 +1,7 @@
 package conversion
 
+import "sync"
+
 // RunType ...
 type RunType string
 
@@ -11,6 +13,7 @@ const (
 
 // Task ...
 type Task struct {
+	sync.Pool
 }
 
 // AddWalker ...
