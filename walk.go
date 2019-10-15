@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/gocacher/cacher"
+	"time"
 )
 
 // WalkRunning ...
@@ -139,6 +140,7 @@ func (w *Walk) Run(ctx context.Context) (e error) {
 	if !b {
 		fn = dummy
 	}
+	time.Sleep(5 * time.Second)
 	e = fn(w.Value)
 	if e != nil {
 		return e

@@ -71,6 +71,7 @@ func (t *Task) Start() error {
 	for _, s := range ss {
 		t.queue.Put(s)
 	}
+	wg := sync.WaitGroup{}
 	for {
 		if v := t.queue.Get(); v != nil {
 			if s, b := v.(string); b {
@@ -80,21 +81,29 @@ func (t *Task) Start() error {
 					continue
 				}
 				_, b := t.running.LoadOrStore(walk.ID(), nil)
-				if b && walk.Status() != WalkWaiting {
+				if !b && walk.Status() == WalkRunning {
+					log.With("id", walk.ID()).Warn("reset status")
 					e := walk.Reset()
 					if e != nil {
 						log.With("id", walk.ID()).Error("reset:", e)
 					}
 				}
 				log.With("id", walk.ID()).Info("queue")
-				e = walk.Run(t.Context)
-				if e != nil {
-					log.With("id", walk.ID()).Error("run:", e)
-				}
+				wg.Add(1)
+				go func(walk IWalk) {
+					e = walk.Run(t.Context)
+					if e != nil {
+						log.With("id", walk.ID()).Error("run:", e)
+					}
+					wg.Done()
+				}(walk)
+				t.running.Delete(walk.ID())
+				//time.Sleep(1 * time.Second)
 			}
 			//time.Sleep(1 * time.Second)
 			continue
 		}
+		wg.Wait()
 		break
 	}
 	log.Info("end")

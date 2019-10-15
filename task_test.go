@@ -10,8 +10,8 @@ import (
 // TestTask_Start ...
 func TestTask_Start(t *testing.T) {
 	task := NewTask()
-	for i := 0; i < 1000; i++ {
-		id := tool.GenerateRandomString(3)
+	for i := 0; i < 100; i++ {
+		id := tool.GenerateRandomString(1)
 		v, e := NewSourceWalk(&VideoSource{
 			Bangumi: id,
 		})
