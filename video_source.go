@@ -54,7 +54,7 @@ type VideoSource struct {
 	Uncensored   bool      `json:"uncensored"`    //有码,无码
 }
 
-// SourceWalk ...
+// NewSourceWalk ...
 func NewSourceWalk(source *VideoSource) IWalk {
 	return &Walk{
 		walk: walk{
