@@ -80,6 +80,7 @@ func (t *Task) Start() error {
 					log.Error(e)
 					continue
 				}
+				log.Info(walk)
 				e = walk.Run(t.Context)
 				if e != nil {
 					log.Error(e)

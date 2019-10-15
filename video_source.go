@@ -57,7 +57,7 @@ type VideoSource struct {
 // NewSourceWalk ...
 func NewSourceWalk(source *VideoSource) IWalk {
 	return &Walk{
-		walk: walk{
+		WalkImpl: WalkImpl{
 			ID:       source.Bangumi,
 			WalkType: "source",
 			Status:   WalkWaiting,
@@ -69,7 +69,7 @@ func NewSourceWalk(source *VideoSource) IWalk {
 func SourceProcess(src interface{}) error {
 	log.Info("source process run")
 	source, b := src.(*VideoSource)
-	if b {
+	if source == nil || !b {
 		return ErrWrongCastType
 	}
 	v := source.Video()

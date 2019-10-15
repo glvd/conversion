@@ -18,8 +18,8 @@ const (
 // WalkStatus ...
 type WalkStatus int
 
-// Walk ...
-type walk struct {
+// WalkImpl ...
+type WalkImpl struct {
 	ID       string
 	WalkType string
 	Status   WalkStatus
@@ -28,7 +28,7 @@ type walk struct {
 
 // Walk ...
 type Walk struct {
-	walk
+	WalkImpl
 }
 
 // IWalk ...
@@ -84,7 +84,7 @@ func LoadWalk(id string) (*Walk, error) {
 
 // ID ...
 func (w Walk) ID() string {
-	return w.walk.ID
+	return w.WalkImpl.ID
 }
 
 // Store ...
@@ -98,7 +98,7 @@ func (w *Walk) Store() error {
 
 // Run ...
 func (w *Walk) Run(ctx context.Context) (e error) {
-	switch w.walk.Status {
+	switch w.WalkImpl.Status {
 	case WalkFinish:
 		log.With("id", w.ID()).Warn("walk was finished")
 		return nil
@@ -106,7 +106,7 @@ func (w *Walk) Run(ctx context.Context) (e error) {
 		log.With("id", w.ID()).Warn("walk was running")
 		return nil
 	case WalkWaiting:
-		w.walk.Status = WalkRunning
+		w.WalkImpl.Status = WalkRunning
 		if err := w.Store(); err != nil {
 			return err
 		}
