@@ -1,11 +1,7 @@
 package conversion
 
 import (
-	"context"
-	"encoding/json"
 	"strings"
-
-	"github.com/go-cacher/cacher"
 )
 
 // Extend ...
@@ -58,62 +54,26 @@ type VideoSource struct {
 	Uncensored   bool      `json:"uncensored"`    //有码,无码
 }
 
-type sourceWalk struct {
-	walk   *Walk
-	source *VideoSource
-}
-
-// Walk ...
-func (s *sourceWalk) Walk() Walk {
-	return s.walk
-}
-
-// LoadWalk ...
-func (s *sourceWalk) LoadWalk() error {
-	bytes, e := cacher.Get(s.ID())
-	if e != nil {
-		return e
-	}
-	return json.Unmarshal(bytes, s.walk)
-}
-
-// ID ...
-func (s sourceWalk) ID() string {
-	return s.source.Bangumi
-}
-
-// Store ...
-func (s *sourceWalk) Store() error {
-	bytes, e := json.Marshal(s.walk)
-	if e != nil {
-		return e
-	}
-	return cacher.Set(s.ID(), bytes)
-}
-
-// Run ...
-func (s *sourceWalk) Run(ctx context.Context) (e error) {
-	v := s.source.Video()
-	i, e := InsertOrUpdate(v)
-	if e != nil {
-		return e
-	}
-	if i == 0 {
-		log.With("id", s.ID()).Warn("not updated")
-	}
-
-	return nil
-}
-
 // SourceWalk ...
-func SourceWalk(source *VideoSource) IWalk {
-	return &sourceWalk{
-		walk: &Walk{
+func NewSourceWalk(source *VideoSource) IWalk {
+	return &Walk{
+		walk: walk{
 			ID:     source.Bangumi,
 			Status: WalkWaiting,
 			Value:  source,
-		},
-		source: source,
+		}}
+}
+
+// SourceProcess ...
+func SourceProcess(src interface{}) error {
+	source, b := src.(*VideoSource)
+	if b {
+		return ErrWrongCastType
+	}
+	v := source.Video()
+	i, e := InsertOrUpdate(v)
+	if e != nil {
+		return e
 	}
 }
 

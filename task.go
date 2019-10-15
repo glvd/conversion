@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/go-cacher/cacher"
+	"go.uber.org/atomic"
 )
 
 // RunType ...
@@ -18,16 +19,31 @@ const (
 
 // Task ...
 type Task struct {
-	walk  map[string]IWalk
+	Limit atomic.Int32
 	queue sync.Pool
 }
 
 // AddWalker ...
-func (t *Task) AddWalker(walk IWalk) {
+func (t *Task) AddWalker(walk IWalk) error {
+	if err := walk.Store(); err != nil {
+		return err
+	}
+	t.queue.Put(walk.Walk().ID)
+	return nil
 }
 
 // Start ...
-func (t *Task) Start() {
+func (t *Task) Start() error {
+	ss, e := LoadTask()
+	if e != nil {
+		return e
+	}
+	for _, s := range ss {
+		t.queue.Put(s)
+	}
+	for v := t.queue.Get(); v != nil {
+
+	}
 
 }
 
