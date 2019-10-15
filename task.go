@@ -58,7 +58,7 @@ func (t *Task) AddWalker(walk IWalk) error {
 	if err := walk.Store(); err != nil {
 		return err
 	}
-	t.queue.Put(walk.Walk().ID)
+	t.queue.Put(walk.ID())
 	return nil
 }
 
@@ -73,6 +73,7 @@ func (t *Task) Start() error {
 	}
 	for {
 		if v := t.queue.Get(); v != nil {
+			log.Info("queue get")
 			if s, b := v.(string); b {
 				walk, e := LoadWalk(s)
 				if e != nil {

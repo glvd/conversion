@@ -89,7 +89,7 @@ func (w Walk) ID() string {
 
 // Store ...
 func (w *Walk) Store() error {
-	bytes, e := json.Marshal(w.walk)
+	bytes, e := json.Marshal(w)
 	if e != nil {
 		return e
 	}
