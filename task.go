@@ -74,14 +74,13 @@ func (t *Task) Start() error {
 	}
 	for {
 		if v := t.queue.Get(); v != nil {
-			log.Info("queue get")
 			if s, b := v.(string); b {
 				walk, e := LoadWalk(s)
 				if e != nil {
 					log.Error(e)
 					continue
 				}
-				log.Info(walk)
+				log.With("id", walk.ID()).Info(walk)
 				e = walk.Run(t.Context)
 				if e != nil {
 					log.Error(e)

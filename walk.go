@@ -71,7 +71,7 @@ func (w Walk) Walk() Walk {
 }
 
 // LoadWalk ...
-func LoadWalk(id string) (*Walk, error) {
+func LoadWalk(id string) (IWalk, error) {
 	bytes, e := cacher.Get(id)
 	if e != nil {
 		return nil, e
