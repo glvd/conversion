@@ -243,6 +243,7 @@ func (w *Walk) Run(ctx context.Context) (e error) {
 	for _, path := range w.VideoPath {
 		video := v.Video()
 		video.TotalEpisode = strconv.Itoa(len(w.VideoPath))
+		video.Episode = strconv.Itoa(GetFileIndex(path))
 		if !SkipVerifyString("source", w.Skip...) {
 			s, e := AddFile(ctx, path)
 			if e != nil {
