@@ -59,7 +59,7 @@ func LoadTask() ([]string, error) {
 
 // AddWalker ...
 func (t *Task) AddWalker(walk IWalk) error {
-	log.With("id", walk.Walk().ID()).Info("add walk")
+	log.With("id", walk.ID()).Info("add walk")
 	if err := walk.Store(); err != nil {
 		return err
 	}

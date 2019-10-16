@@ -38,7 +38,6 @@ type Walk struct {
 // IWalk ...
 type IWalk interface {
 	ID() string
-	Walk() Walk
 	Update() error
 	Store() error
 	Reset() error
@@ -151,6 +150,14 @@ func (w *Walk) Update() error {
 	bytes, e := json.Marshal(w)
 	if e != nil {
 		return e
+	}
+	b, err := cacher.Has(w.ID())
+	if err != nil {
+		return err
+	}
+	if !b {
+		log.With("id", w.ID()).Warn("update")
+		return nil
 	}
 	return cacher.Set(w.ID(), bytes)
 }
