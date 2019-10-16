@@ -31,11 +31,14 @@ type WalkImpl struct {
 
 // Walk ...
 type Walk struct {
+	WalkImpl
 	VideoPath  string
 	PosterPath string
 	ThumbPath  string
 	SamplePath []string
-	WalkImpl
+	Scale      Scale
+	Output     string
+	Skip       []string
 }
 
 // IWalk ...
@@ -49,7 +52,7 @@ type IWalk interface {
 }
 
 // VideoProcessFunc ...
-type VideoProcessFunc func(walk *Walk) error
+type VideoProcessFunc func(ctx context.Context, walk *Walk) error
 
 // WalkOptions ...
 type WalkOptions func(walk *Walk)
@@ -64,6 +67,27 @@ var ErrWrongCastType = errors.New("something wrong when cast to type")
 var WalkRunProcessFunction = map[string]VideoProcessFunc{
 	"source": SourceProcess,
 	"info":   InfoProcess,
+}
+
+// SkipOption ...
+func SkipOption(skip ...string) WalkOptions {
+	return func(walk *Walk) {
+		walk.Skip = skip
+	}
+}
+
+// ScaleOption ...
+func ScaleOption(scale Scale) WalkOptions {
+	return func(walk *Walk) {
+		walk.Scale = scale
+	}
+}
+
+// OutputPathOption ...
+func OutputPathOption(path string) WalkOptions {
+	return func(walk *Walk) {
+		walk.Output = path
+	}
 }
 
 // VideoPathOption ...
@@ -94,7 +118,7 @@ func SamplePathOption(path []string) WalkOptions {
 	}
 }
 
-func dummy(walk *Walk) error {
+func dummy(ctx context.Context, walk *Walk) error {
 	log.With("id", walk.ID()).Panic(walk)
 	return nil
 }
@@ -113,6 +137,10 @@ func (w *Walk) Status() WalkStatus {
 // Walk ...
 func (w Walk) Walk() Walk {
 	return w
+}
+
+func (w Walk) slice() *Slice {
+	return NewSlice(w.VideoPath, SliceScale(w.Scale), SliceOutput(w.Output), SliceSkip(w.Skip...))
 }
 
 // LoadWalk ...
@@ -177,7 +205,7 @@ func (w *Walk) Run(ctx context.Context) (e error) {
 		fn = dummy
 	}
 	//time.Sleep(5 * time.Second)
-	e = fn(w)
+	e = fn(ctx, w)
 	if e != nil {
 		return e
 	}
@@ -219,6 +247,16 @@ func GetFiles(name string, regex string) (files []string) {
 		files = append(files, fullPath)
 	}
 	return files
+}
+
+// SkipVerifyString ...
+func SkipVerifyString(tp string, v ...string) bool {
+	for i := range v {
+		if v[i] == tp {
+			return true
+		}
+	}
+	return false
 }
 
 // SkipVerify ...

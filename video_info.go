@@ -1,6 +1,9 @@
 package conversion
 
-import "encoding/json"
+import (
+	"context"
+	"encoding/json"
+)
 
 // VideoInfo ...
 type VideoInfo struct {
@@ -118,7 +121,7 @@ func decodeInfo(src []byte) (*VideoInfo, error) {
 }
 
 // InfoProcess ...
-func InfoProcess(walk *Walk) error {
+func InfoProcess(ctx context.Context, walk *Walk) error {
 	log.Info("info process run")
 	info, e := decodeInfo(walk.Value)
 	if e != nil {
@@ -131,6 +134,10 @@ func InfoProcess(walk *Walk) error {
 	}
 	if i == 0 {
 		log.With("id", info.ID).Warn("not updated")
+	}
+	e := walk.slice().Do(ctx)
+	if e != nil {
+		return e
 	}
 	return nil
 }

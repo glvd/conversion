@@ -36,13 +36,13 @@ type Slice struct {
 
 	scale     Scale
 	output    string
-	skip      []interface{}
+	skip      []string
 	input     string
 	sharpness string
 }
 
 // SliceSkip ...
-func SliceSkip(skip ...interface{}) SliceOptions {
+func SliceSkip(skip ...string) SliceOptions {
 	return func(slice *Slice) {
 		slice.skip = skip
 	}
@@ -100,7 +100,7 @@ func (s *Slice) Do(ctx context.Context) (e error) {
 		s.scale = res
 	}
 	s.sharpness = strconv.FormatInt(s.Scale(), 10) + "P"
-	if SkipVerify("slice", s.skip...) {
+	if SkipVerifyString("slice", s.skip...) {
 		sa, e := split.FFMpegSplitToM3U8(ctx, s.input, split.StreamFormatOption(s.format), split.ScaleOption(s.Scale()), split.OutputOption(s.output))
 		if e != nil {
 			return fmt.Errorf("%w", e)
