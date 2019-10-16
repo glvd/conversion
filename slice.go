@@ -1,7 +1,9 @@
 package conversion
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"os"
 	"strconv"
 
@@ -30,11 +32,13 @@ type SliceOptions func(slice *Slice)
 
 // Slice ...
 type Slice struct {
+	format *split.StreamFormat
+
 	scale     Scale
 	output    string
 	skip      []interface{}
-	skipExist bool
 	input     string
+	sharpness string
 }
 
 // SliceSkip ...
@@ -77,6 +81,36 @@ func (s Slice) Scale() int64 {
 	return scale(s.scale)
 }
 
+// Sharpness ...
+func (s Slice) Sharpness() string {
+	return s.sharpness
+}
+
+// Do ...
+func (s *Slice) Do(ctx context.Context) (e error) {
+	s.format, e = split.FFProbeStreamFormat(s.input)
+	if e != nil {
+		return e
+	}
+	if !isMedia(s.format) {
+		return errors.New("file is not a video/audio")
+	}
+	res := toScale(int64(s.format.ResolutionInt()))
+	if res < s.scale {
+		s.scale = res
+	}
+	s.sharpness = strconv.FormatInt(s.Scale(), 10) + "P"
+	if SkipVerify("slice", s.skip...) {
+		sa, e := split.FFMpegSplitToM3U8(nil, s.input, split.StreamFormatOption(s.format), split.ScaleOption(s.Scale()), split.OutputOption(s.output))
+		if e != nil {
+			return fmt.Errorf("%w", e)
+		}
+		log.Infof("%+v", sa)
+		return
+	}
+	return errors.New("slice skipped")
+}
+
 func toScale(scale int64) Scale {
 	if scale > 1080 {
 		return HighScale
@@ -102,26 +136,4 @@ func isMedia(format *split.StreamFormat) bool {
 		return false
 	}
 	return true
-}
-
-func sliceVideo(slice *Slice, file string, hash *Hash) (sa *split.Argument, e error) {
-	format, e := split.FFProbeStreamFormat(file)
-	if e != nil {
-		return nil, e
-	}
-	if !isMedia(format) {
-		return nil, errors.New("file is not a video/audio")
-	}
-
-	if SkipVerify("slice", slice.skip...) {
-		res := toScale(int64(format.ResolutionInt()))
-		if res < slice.scale {
-			slice.scale = res
-		}
-		sa, e = split.FFMpegSplitToM3U8(nil, file, split.StreamFormatOption(format), split.ScaleOption(slice.Scale()), split.OutputOption(slice.output))
-		hash.Sharpness = strconv.FormatInt(slice.Scale(), 10) + "P"
-		log.Infof("%+v", sa)
-		return sa, e
-	}
-	return nil, errors.New("slice skipped")
 }
