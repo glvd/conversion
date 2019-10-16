@@ -101,7 +101,7 @@ func (s *Slice) Do(ctx context.Context) (e error) {
 	}
 	s.sharpness = strconv.FormatInt(s.Scale(), 10) + "P"
 	if SkipVerify("slice", s.skip...) {
-		sa, e := split.FFMpegSplitToM3U8(nil, s.input, split.StreamFormatOption(s.format), split.ScaleOption(s.Scale()), split.OutputOption(s.output))
+		sa, e := split.FFMpegSplitToM3U8(ctx, s.input, split.StreamFormatOption(s.format), split.ScaleOption(s.Scale()), split.OutputOption(s.output))
 		if e != nil {
 			return fmt.Errorf("%w", e)
 		}
