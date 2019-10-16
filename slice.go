@@ -131,11 +131,3 @@ func scale(scale Scale) int64 {
 	}
 }
 
-func isMedia(format *split.StreamFormat) bool {
-	video := format.Video()
-	audio := format.Audio()
-	if audio == nil || video == nil {
-		return false
-	}
-	return true
-}
