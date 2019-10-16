@@ -273,7 +273,10 @@ func MustString(val, src string) string {
 	return src
 }
 
-// CheckConnection ...
-func CheckConnection() bool {
+// CheckDatabase ...
+func CheckDatabase() bool {
+	if _database == nil {
+		return false
+	}
 	return _database.Ping() == nil
 }
