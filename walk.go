@@ -102,7 +102,7 @@ func dummy(walk *Walk) error {
 // Reset ...
 func (w *Walk) Reset() error {
 	w.WalkImpl.Status = WalkWaiting
-	return w.Store()
+	return w.Update()
 }
 
 // Status ...
