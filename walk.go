@@ -47,7 +47,7 @@ type IWalk interface {
 }
 
 // VideoProcessFunc ...
-type VideoProcessFunc func(src []byte) error
+type VideoProcessFunc func(walk *Walk) error
 
 // WalkOptions ...
 type WalkOptions func(walk *Walk)
@@ -92,8 +92,8 @@ func SamplePathOption(path []string) WalkOptions {
 	}
 }
 
-func dummy(v []byte) error {
-	log.Panic(v)
+func dummy(walk *Walk) error {
+	log.With("id", walk.ID()).Panic(walk)
 	return nil
 }
 
@@ -167,7 +167,7 @@ func (w *Walk) Run(ctx context.Context) (e error) {
 		fn = dummy
 	}
 	//time.Sleep(5 * time.Second)
-	e = fn(w.Value)
+	e = fn(w)
 	if e != nil {
 		return e
 	}

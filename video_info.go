@@ -118,9 +118,9 @@ func decodeInfo(src []byte) (*VideoInfo, error) {
 }
 
 // InfoProcess ...
-func InfoProcess(src []byte) error {
+func InfoProcess(walk *Walk) error {
 	log.Info("info process run")
-	info, e := decodeInfo(src)
+	info, e := decodeInfo(walk.Value)
 	if e != nil {
 		return e
 	}

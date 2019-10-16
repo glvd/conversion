@@ -90,9 +90,9 @@ func decodeSource(src []byte) (*VideoSource, error) {
 }
 
 // SourceProcess ...
-func SourceProcess(src []byte) error {
+func SourceProcess(walk *Walk) error {
 	log.Info("source process run")
-	source, e := decodeSource(src)
+	source, e := decodeSource(walk.Value)
 	if e != nil {
 		return e
 	}
