@@ -14,7 +14,7 @@ type Extend struct {
 // VideoSource ...
 type VideoSource struct {
 	Bangumi      string    `json:"bangumi"`       //番号 no
-	VideoPath    string    `json:"video_path"`    //视频地址
+	VideoPath    []string  `json:"video_path"`    //视频地址
 	SourceHash   string    `json:"source_hash"`   //原片hash
 	ThumbPath    string    `json:"thumb_path"`    //缩略图路径
 	PosterPath   string    `json:"poster_path"`   //海报路径

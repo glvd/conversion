@@ -243,7 +243,6 @@ func (w *Walk) Run(ctx context.Context) (e error) {
 	for _, path := range w.VideoPath {
 		video := v.Video()
 		video.TotalEpisode = strconv.Itoa(len(w.VideoPath))
-
 		if !SkipVerifyString("source", w.Skip...) {
 			s, e := AddFile(ctx, path)
 			if e != nil {
@@ -327,6 +326,17 @@ func GetFiles(name string, regex string) (files []string) {
 	return files
 }
 
+func GetFileIndex(filename string) int {
+	name := filepath.Base(filename)
+	name = FileAbsName(name)
+	last := LastSplit(name, "@")
+	idx := ByteIndex(last[0])
+	if ByteIndex(last[0]) == -1 {
+		return 1
+	}
+	return idx + 1
+}
+
 func FileAbsName(filename string) string {
 	_, filename = filepath.Split(filename)
 	for i := len(filename) - 1; i >= 0 && !os.IsPathSeparator(filename[i]); i-- {
@@ -344,7 +354,6 @@ func FileName(filename string) string {
 		if s[last-1] == '@' {
 			return string(s[:last-1])
 		}
-		//return string(s[:last])
 	}
 	return string(s)
 }

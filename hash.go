@@ -73,34 +73,34 @@ func FindHash(session *xorm.Session, checksum string) (unfin *Hash, e error) {
 	return unfin, nil
 }
 
-// AddOrUpdateHash ...
-func AddOrUpdateHash(session *xorm.Session, unfin *Hash) (e error) {
-	tmp := new(Hash)
-	var found bool
-	session = MustSession(session)
-	if unfin.ID() != "" {
-		found, e = session.Clone().ID(unfin.ID).Get(tmp)
-	} else {
-		found, e = session.Clone().Where("checksum = ?", unfin.Checksum).
-			Where("type = ?", unfin.Type).Get(tmp)
-	}
-	if e != nil {
-		return e
-	}
-	if found {
-		//only slice need update,video update for check , hash changed
-		i := int64(0)
-		if unfin.Hash != unfin.Hash || unfin.Type == TypeSlice || unfin.Type == TypeVideo {
-			unfin.SetVersion(tmp.Version())
-			unfin.SetID(tmp.ID())
-			i, e = session.Clone().ID(unfin.ID).Update(unfin)
-			log.Infof("updated(%d): %+v", i, tmp)
-		}
-		return e
-	}
-	_, e = session.Clone().InsertOne(unfin)
-	return
-}
+//// AddOrUpdateHash ...
+//func AddOrUpdateHash(session *xorm.Session, unfin *Hash) (e error) {
+//	tmp := new(Hash)
+//	var found bool
+//	session = MustSession(session)
+//	if unfin.ID() != "" {
+//		found, e = session.Clone().ID(unfin.ID).Get(tmp)
+//	} else {
+//		found, e = session.Clone().Where("checksum = ?", unfin.Checksum).
+//			Where("type = ?", unfin.Type).Get(tmp)
+//	}
+//	if e != nil {
+//		return e
+//	}
+//	if found {
+//		//only slice need update,video update for check , hash changed
+//		i := int64(0)
+//		if unfin.Hash != unfin.Hash || unfin.Type == TypeSlice || unfin.Type == TypeVideo {
+//			unfin.SetVersion(tmp.Version())
+//			unfin.SetID(tmp.ID())
+//			i, e = session.Clone().ID(unfin.ID).Update(unfin)
+//			log.Infof("updated(%d): %+v", i, tmp)
+//		}
+//		return e
+//	}
+//	_, e = session.Clone().InsertOne(unfin)
+//	return
+//}
 
 // Clone ...
 func (h *Hash) Clone() (n *Hash) {
