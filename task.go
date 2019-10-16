@@ -3,8 +3,9 @@ package conversion
 import (
 	"context"
 	"encoding/json"
-	"github.com/gocacher/cacher"
 	"sync"
+
+	"github.com/gocacher/cacher"
 )
 
 // RunType ...
@@ -21,7 +22,11 @@ type Task struct {
 	Context context.Context
 	running sync.Map
 	queue   sync.Pool
+	Limit   int
 }
+
+// DefaultLimit ...
+var DefaultLimit = 5
 
 // StoreTask ...
 func StoreTask(s []string) error {
@@ -72,40 +77,40 @@ func (t *Task) Start() error {
 		t.queue.Put(s)
 	}
 	wg := sync.WaitGroup{}
-	for {
-		if v := t.queue.Get(); v != nil {
-			if s, b := v.(string); b {
-				walk, e := LoadWalk(s)
-				if e != nil {
-					log.Error(e)
+	for i := 0; i < t.Limit; i++ {
+		wg.Add(1)
+		go func(wg *sync.WaitGroup) {
+			defer wg.Done()
+			for {
+				if v := t.queue.Get(); v != nil {
+					if s, b := v.(string); b {
+						walk, e := LoadWalk(s)
+						if e != nil {
+							log.Error(e)
+							continue
+						}
+						_, b := t.running.LoadOrStore(walk.ID(), nil)
+						if !b && walk.Status() == WalkRunning {
+							log.With("id", walk.ID()).Warn("reset status")
+							e := walk.Reset()
+							if e != nil {
+								log.With("id", walk.ID()).Error("reset:", e)
+							}
+						}
+						log.With("id", walk.ID()).Info("queue")
+						e = walk.Run(t.Context)
+						if e != nil {
+							log.With("id", walk.ID()).Error("run:", e)
+						}
+						t.running.Delete(walk.ID())
+					}
 					continue
 				}
-				_, b := t.running.LoadOrStore(walk.ID(), nil)
-				if !b && walk.Status() == WalkRunning {
-					log.With("id", walk.ID()).Warn("reset status")
-					e := walk.Reset()
-					if e != nil {
-						log.With("id", walk.ID()).Error("reset:", e)
-					}
-				}
-				log.With("id", walk.ID()).Info("queue")
-				wg.Add(1)
-				go func(walk IWalk) {
-					e = walk.Run(t.Context)
-					if e != nil {
-						log.With("id", walk.ID()).Error("run:", e)
-					}
-					wg.Done()
-				}(walk)
-				t.running.Delete(walk.ID())
-				//time.Sleep(1 * time.Second)
+				break
 			}
-			//time.Sleep(1 * time.Second)
-			continue
-		}
-		wg.Wait()
-		break
+		}(&wg)
 	}
+	wg.Wait()
 	log.Info("end")
 	return nil
 }
@@ -114,6 +119,7 @@ func (t *Task) Start() error {
 func NewTask() *Task {
 	return &Task{
 		Context: context.Background(),
+		Limit:   DefaultLimit,
 		queue:   sync.Pool{},
 	}
 }

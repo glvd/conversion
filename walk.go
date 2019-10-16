@@ -68,6 +68,7 @@ func (w *Walk) Reset() error {
 	return w.Store()
 }
 
+// Status ...
 func (w *Walk) Status() WalkStatus {
 	return w.WalkImpl.Status
 }
@@ -110,6 +111,7 @@ func (w *Walk) Store() error {
 	return cacher.Set(w.ID(), bytes)
 }
 
+// Update ...
 func (w *Walk) Update() error {
 	bytes, e := json.Marshal(w)
 	if e != nil {
@@ -147,8 +149,5 @@ func (w *Walk) Run(ctx context.Context) (e error) {
 	}
 
 	w.WalkImpl.Status = WalkFinish
-	if err := w.Update(); err != nil {
-		return err
-	}
-	return nil
+	return w.Update()
 }
