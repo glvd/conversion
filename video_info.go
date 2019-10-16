@@ -121,12 +121,12 @@ func decodeInfo(src []byte) (IVideo, error) {
 }
 
 // VideoFromInfo ...
-func VideoFromInfo(ctx context.Context, walk *Walk) error {
+func VideoFromInfo(ctx context.Context, walk *Walk) (IVideo, error) {
 	log.Info("info process run")
 	info, e := decodeInfo(walk.Value)
 	if e != nil {
-		return e
+		return nil, e
 	}
 
-	return nil
+	return info, nil
 }

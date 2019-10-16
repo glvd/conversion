@@ -108,7 +108,7 @@ func (s *Slice) Do(ctx context.Context) (e error) {
 			return fmt.Errorf("%w", e)
 		}
 		log.Infof("%+v", sa)
-		return
+		return nil
 	}
 	return errors.New("slice skipped")
 }

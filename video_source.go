@@ -94,17 +94,17 @@ func VideoFromSource(walk *Walk) (IVideo, error) {
 	log.Info("source process run")
 	source, e := decodeSource(walk.Value)
 	if e != nil {
-		return e
+		return nil, e
 	}
-	v := source.Video()
-	i, e := InsertOrUpdate(v)
-	if e != nil {
-		return e
-	}
-	if i == 0 {
-		log.With("id", source.Bangumi).Warn("not updated")
-	}
-	return nil
+	//v := source.Video()
+	//i, e := InsertOrUpdate(v)
+	//if e != nil {
+	//	return e
+	//}
+	//if i == 0 {
+	//	log.With("id", source.Bangumi).Warn("not updated")
+	//}
+	return source, nil
 }
 
 // Video ...

@@ -11,7 +11,7 @@ require (
 	github.com/godcong/go-trait v0.0.0-20190816072228-f216e906756e
 	github.com/google/uuid v1.1.1
 	github.com/gotrait/tool v0.0.1
-	github.com/kr/pretty v0.1.0 // indirect
+	github.com/ipfs/go-ipfs-http-client v0.0.5
 	github.com/mattn/go-sqlite3 v1.11.0
 	github.com/sirupsen/logrus v1.4.0 // indirect
 )
