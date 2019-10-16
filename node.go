@@ -2,8 +2,12 @@ package conversion
 
 import (
 	"context"
+	files "github.com/ipfs/go-ipfs-files"
+	"github.com/ipfs/interface-go-ipfs-core/options"
+	"github.com/ipfs/interface-go-ipfs-core/path"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/ipfs/go-ipfs-http-client"
@@ -19,7 +23,8 @@ type PeerID struct {
 }
 
 var _node string
-var cli *httpapi.HttpApi
+var _cli *httpapi.HttpApi
+var _myNode *PeerID
 
 func init() {
 	_node = os.Getenv("IPFS_PATH")
@@ -27,15 +32,17 @@ func init() {
 
 // NodeID ...
 func NodeID() *PeerID {
-	var nid PeerID
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-	e := cli.Request("id").Exec(ctx, &nid)
-	if e != nil {
-		log.Error(e)
-		return nil
+	if _myNode == nil {
+		_myNode = &PeerID{}
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		e := _cli.Request("id").Exec(ctx, _myNode)
+		if e != nil {
+			log.Error(e)
+			return nil
+		}
 	}
-	return &nid
+	return _myNode
 }
 
 // SetNodePath ...
@@ -45,7 +52,7 @@ func SetNodePath(path string) {
 
 // ConnectToNode ...
 func ConnectToNode() (e error) {
-	cli, e = httpapi.NewPathApi(_node)
+	_cli, e = httpapi.NewPathApi(_node)
 	return
 }
 
@@ -56,4 +63,55 @@ func CheckNode() bool {
 		return false
 	}
 	return true
+}
+
+func ResolvedHash(path path.Resolved) string {
+	ss := strings.Split(path.String(), "/")
+	if len(ss) == 3 {
+		return ss[2]
+	}
+	return ""
+}
+
+// AddFile ...
+func AddFile(ctx context.Context, filename string) (string, error) {
+	file, e := os.Open(filename)
+	if e != nil {
+		return "", e
+	}
+	resolved, e := _cli.Unixfs().Add(ctx, files.NewReaderFile(file),
+		func(settings *options.UnixfsAddSettings) error {
+			settings.Pin = true
+			return nil
+		})
+	if e != nil {
+		return "", e
+	}
+	return ResolvedHash(resolved), nil
+}
+
+// AddDir ...
+func AddDir(ctx context.Context, dir string) (string, error) {
+	stat, err := os.Lstat(dir)
+	if err != nil {
+		return "", err
+	}
+
+	sf, err := files.NewSerialFile(dir, false, stat)
+	if err != nil {
+		return "", err
+	}
+	//不加目录
+	//slf := files.NewSliceDirectory([]files.DirEntry{files.FileEntry(filepath.Base(dir), sf)})
+	//reader := files.NewMultiFileReader(slf, true)
+	resolved, e := _cli.Unixfs().Add(ctx, sf,
+		func(settings *options.UnixfsAddSettings) error {
+			settings.Pin = true
+			return nil
+		})
+	if e != nil {
+		return "", e
+	}
+
+	return ResolvedHash(resolved), e
 }
