@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/gocacher/cacher"
 )
@@ -181,4 +184,39 @@ func (w *Walk) Run(ctx context.Context) (e error) {
 
 	w.WalkImpl.Status = WalkFinish
 	return w.Update()
+}
+
+// GetFiles ...
+func GetFiles(name string, regex string) (files []string) {
+	info, e := os.Stat(name)
+	if e != nil {
+		return
+	}
+	if !info.IsDir() {
+		return append(files, name)
+	}
+	file, e := os.Open(name)
+	if e != nil {
+		return
+	}
+	defer file.Close()
+	names, e := file.Readdirnames(-1)
+	if e != nil {
+		return
+	}
+	var fullPath string
+	for _, filename := range names {
+		fullPath = filepath.Join(name, filename)
+		base := filepath.Base(fullPath)
+		if regex != "" && strings.Index(base, regex) == -1 {
+			continue
+		}
+		fileInfo, e := os.Stat(fullPath)
+		if e != nil || fileInfo.IsDir() {
+			log.With("dir", fileInfo != nil).Error(e)
+			continue
+		}
+		files = append(files, fullPath)
+	}
+	return files
 }

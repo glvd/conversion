@@ -50,7 +50,7 @@ type BeforeInsert interface {
 
 // IModel ...
 type IModel interface {
-	Table() *xorm.Session
+	Table() interface{}
 	ID() string
 	SetID(string)
 	Version() int
@@ -209,26 +209,48 @@ func SyncTable() (e error) {
 
 // InsertOrUpdate ...
 func InsertOrUpdate(m IModel) (i int64, e error) {
-	i, e = m.Table().InsertOne(m)
+	i, e = _database.InsertOne(m)
 	if e != nil {
 		return 0, e
 	}
 	return i, e
 }
 
+// FindAll ...
+func FindAll(model IModel, f func(rows *xorm.Rows) error, limit int, start ...int) (e error) {
+	table := _database.Table(model.Table())
+	if limit == 0 {
+		return nil
+	} else if limit > 0 {
+		table = table.Limit(limit, start...)
+	}
+	rows, e := table.Rows(model)
+	if e != nil {
+		return e
+	}
+
+	for rows.Next() {
+		if err := f(rows); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // MustSession ...
 func MustSession(session *xorm.Session) *xorm.Session {
 	if session == nil {
-		panic("session is nil")
+		return _database.Where("")
 	}
 	return session
 }
 
 // IsExist ...
 func IsExist(m IModel) bool {
-	i, e := m.Table().
+	i, e := _database.
 		Where("id = ?", m.ID()).
-		Count()
+		Count(m.Table())
 	if e != nil || i <= 0 {
 		return false
 	}

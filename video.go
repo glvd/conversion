@@ -6,8 +6,6 @@ import (
 	"encoding/hex"
 	"io"
 	"os"
-
-	"github.com/go-xorm/xorm"
 )
 
 // Video ...
@@ -75,8 +73,8 @@ func (v *Video) Sync() error {
 }
 
 // Table ...
-func (v *Video) Table() *xorm.Session {
-	return _database.Table(&Video{})
+func (v *Video) Table() interface{} {
+	return &Video{}
 }
 
 // IVideo ...
