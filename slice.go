@@ -93,7 +93,7 @@ func (s *Slice) Do(ctx context.Context) (e error) {
 	if e != nil {
 		return e
 	}
-	if !isMedia(s.format) {
+	if !IsMedia(s.format) {
 		return errors.New("file is not a video/audio")
 	}
 	res := toScale(int64(s.format.ResolutionInt()))
