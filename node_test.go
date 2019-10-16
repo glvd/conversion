@@ -14,5 +14,5 @@ func TestNodeID(t *testing.T) {
 	if CheckNode() {
 		t.Failed()
 	}
-	t.Logf("%+v", NodeID())
+	t.Logf("%+v", MyID())
 }

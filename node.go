@@ -2,6 +2,7 @@ package conversion
 
 import (
 	"context"
+	"errors"
 	files "github.com/ipfs/go-ipfs-files"
 	"github.com/ipfs/interface-go-ipfs-core/options"
 	"github.com/ipfs/interface-go-ipfs-core/path"
@@ -24,25 +25,25 @@ type PeerID struct {
 
 var _node string
 var _cli *httpapi.HttpApi
-var _myNode *PeerID
+var _myID *PeerID
 
 func init() {
 	_node = os.Getenv("IPFS_PATH")
 }
 
-// NodeID ...
-func NodeID() *PeerID {
-	if _myNode == nil {
-		_myNode = &PeerID{}
+// MyID ...
+func MyID() *PeerID {
+	if _myID == nil {
+		_myID = &PeerID{}
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
-		e := _cli.Request("id").Exec(ctx, _myNode)
+		e := _cli.Request("id").Exec(ctx, _myID)
 		if e != nil {
 			log.Error(e)
 			return nil
 		}
 	}
-	return _myNode
+	return _myID
 }
 
 // SetNodePath ...
@@ -65,12 +66,12 @@ func CheckNode() bool {
 	return true
 }
 
-func ResolvedHash(path path.Resolved) string {
+func ResolvedHash(path path.Resolved) (string, error) {
 	ss := strings.Split(path.String(), "/")
 	if len(ss) == 3 {
-		return ss[2]
+		return ss[2], nil
 	}
-	return ""
+	return "", errors.New("wrong resolved data")
 }
 
 // AddFile ...
@@ -87,7 +88,7 @@ func AddFile(ctx context.Context, filename string) (string, error) {
 	if e != nil {
 		return "", e
 	}
-	return ResolvedHash(resolved), nil
+	return ResolvedHash(resolved)
 }
 
 // AddDir ...
@@ -113,5 +114,42 @@ func AddDir(ctx context.Context, dir string) (string, error) {
 		return "", e
 	}
 
-	return ResolvedHash(resolved), e
+	return ResolvedHash(resolved)
+}
+
+func PinHash(ctx context.Context, hash string) error {
+	return _cli.Pin().Add(ctx, path.New(hash), func(settings *options.PinAddSettings) error {
+		settings.Recursive = true
+		return nil
+	})
+}
+
+func UnpinHash(ctx context.Context, hash string) error {
+	return _cli.Pin().Rm(ctx, path.New(hash), func(settings *options.PinRmSettings) error {
+		settings.Recursive = true
+		return nil
+	})
+}
+
+func PinCheck(ctx context.Context, hash ...string) (int, error) {
+	pins, e := _cli.Pin().Ls(ctx, func(settings *options.PinLsSettings) error {
+		settings.Type = "recursive"
+		return nil
+	})
+	if e != nil {
+		return -1, e
+	}
+	for i, v := range hash {
+		for _, pin := range pins {
+			if hash, err := ResolvedHash(pin.Path()); err != nil {
+				return i, err
+			} else {
+				if hash == v {
+					break
+				}
+			}
+			return i, nil
+		}
+	}
+	return len(hash), nil
 }
