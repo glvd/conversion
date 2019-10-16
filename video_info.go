@@ -43,6 +43,52 @@ type Sample struct {
 	Title string `json:"Title"`
 }
 
+// Video ...
+func (v VideoInfo) Video() *Video {
+	var role []string
+	for _, act := range v.Actors {
+		role = append(role, act.Name)
+	}
+	var tags []string
+	for _, gen := range v.Genres {
+		tags = append(tags, gen.Content)
+	}
+
+	return &Video{
+		Model:        Model{},
+		BanNo:        v.ID,
+		Intro:        v.Title,
+		Alias:        nil,
+		ThumbHash:    "",
+		PosterHash:   "",
+		SourceHash:   "",
+		M3U8Hash:     "",
+		Key:          "",
+		M3U8:         "",
+		Role:         role,
+		Director:     "",
+		Systematics:  "",
+		Season:       MustString("", "1"),
+		TotalEpisode: MustString("", "1"),
+		Episode:      MustString("", "1"),
+		Producer:     v.Studio,
+		Publisher:    "",
+		Type:         "",
+		Format:       MustString("", "2D"),
+		Language:     "",
+		Caption:      "",
+		Group:        "",
+		Index:        "",
+		Date:         v.ReleaseDate,
+		Sharpness:    "",
+		Series:       v.MovieSet,
+		Tags:         tags,
+		Length:       "",
+		Sample:       nil,
+		Uncensored:   v.Uncensored,
+	}
+}
+
 // NewInfoWalk ...
 func NewInfoWalk(info *VideoInfo, options ...WalkOptions) (IWalk, error) {
 	bytes, e := json.Marshal(info)
@@ -61,4 +107,30 @@ func NewInfoWalk(info *VideoInfo, options ...WalkOptions) (IWalk, error) {
 		opt(walk)
 	}
 	return walk, nil
+}
+func decodeInfo(src []byte) (*VideoInfo, error) {
+	var info VideoInfo
+	e := json.Unmarshal(src, &info)
+	if e != nil {
+		return nil, e
+	}
+	return &info, nil
+}
+
+// InfoProcess ...
+func InfoProcess(src []byte) error {
+	log.Info("source process run")
+	info, e := decodeInfo(src)
+	if e != nil {
+		return e
+	}
+	v := info.Video()
+	i, e := InsertOrUpdate(v)
+	if e != nil {
+		return e
+	}
+	if i == 0 {
+		log.With("id", info.ID).Warn("not updated")
+	}
+	return nil
 }
