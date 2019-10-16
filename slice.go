@@ -5,7 +5,7 @@ import (
 	"os"
 	"strconv"
 
-	cmd "github.com/godcong/go-ffmpeg-cmd"
+	"github.com/glvd/split"
 )
 
 // Scale ...
@@ -95,7 +95,7 @@ func scale(scale Scale) int64 {
 	}
 }
 
-func isMedia(format *cmd.StreamFormat) bool {
+func isMedia(format *split.StreamFormat) bool {
 	video := format.Video()
 	audio := format.Audio()
 	if audio == nil || video == nil {
@@ -104,8 +104,8 @@ func isMedia(format *cmd.StreamFormat) bool {
 	return true
 }
 
-func sliceVideo(slice *Slice, file string, hash *Hash) (sa *cmd.SplitArgs, e error) {
-	format, e := cmd.FFProbeStreamFormat(file)
+func sliceVideo(slice *Slice, file string, hash *Hash) (sa *split.Argument, e error) {
+	format, e := split.FFProbeStreamFormat(file)
 	if e != nil {
 		return nil, e
 	}
@@ -118,7 +118,7 @@ func sliceVideo(slice *Slice, file string, hash *Hash) (sa *cmd.SplitArgs, e err
 		if res < slice.scale {
 			slice.scale = res
 		}
-		sa, e = cmd.FFMpegSplitToM3U8(nil, file, cmd.StreamFormatOption(format), cmd.ScaleOption(slice.Scale()), cmd.OutputOption(slice.output))
+		sa, e = split.FFMpegSplitToM3U8(nil, file, split.StreamFormatOption(format), split.ScaleOption(slice.Scale()), split.OutputOption(slice.output))
 		hash.Sharpness = strconv.FormatInt(slice.Scale(), 10) + "P"
 		log.Infof("%+v", sa)
 		return sa, e
