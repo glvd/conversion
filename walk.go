@@ -62,7 +62,7 @@ var ErrWrongCastType = errors.New("something wrong when cast to type")
 // WalkRunProcessFunction ...
 var WalkRunProcessFunction = map[string]VideoProcessFunc{
 	"source": SourceProcess,
-	"info":   nil,
+	"info":   InfoProcess,
 }
 
 // VideoPathOption ...

@@ -22,6 +22,17 @@ func TestTask_Start(t *testing.T) {
 		if e != nil {
 			t.Fatal(e)
 		}
+		id = tool.GenerateRandomString(10)
+		v1, e1 := NewInfoWalk(&VideoInfo{
+			ID: id,
+		})
+		if e1 != nil {
+			t.Fatal(e1)
+		}
+		e = task.AddWalker(v1)
+		if e != nil {
+			t.Fatal(e)
+		}
 		time.Sleep(1 * time.Microsecond)
 	}
 	log.Info("running")
