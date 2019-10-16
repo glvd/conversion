@@ -1,8 +1,6 @@
 package conversion
 
-// FileWalk ...
-type FileWalk struct {
-}
+import "encoding/json"
 
 // VideoInfo ...
 type VideoInfo struct {
@@ -43,4 +41,24 @@ type Sample struct {
 	Thumb string `json:"Thumb"`
 	Image string `json:"Image"`
 	Title string `json:"Title"`
+}
+
+// NewInfoWalk ...
+func NewInfoWalk(info *VideoInfo, options ...WalkOptions) (IWalk, error) {
+	bytes, e := json.Marshal(info)
+	if e != nil {
+		return nil, e
+	}
+	walk := &Walk{
+		WalkImpl: WalkImpl{
+			ID:       info.ID,
+			WalkType: "info",
+			Status:   WalkWaiting,
+			Value:    bytes,
+		},
+	}
+	for _, opt := range options {
+		opt(walk)
+	}
+	return walk, nil
 }

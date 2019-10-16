@@ -4,8 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/gocacher/cacher"
 	"time"
+
+	"github.com/gocacher/cacher"
 )
 
 // WalkRunning ...
@@ -28,6 +29,10 @@ type WalkImpl struct {
 
 // Walk ...
 type Walk struct {
+	VideoPath  string
+	PosterPath string
+	ThumbPath  string
+	SamplePath []string
 	WalkImpl
 }
 
@@ -42,19 +47,50 @@ type IWalk interface {
 	Run(ctx context.Context) (e error)
 }
 
+// VideoProcessFunc ...
+type VideoProcessFunc func(src []byte) error
+
+// WalkOptions ...
+type WalkOptions func(walk *Walk)
+
 // ErrWalkFinish ...
 var ErrWalkFinish = errors.New("walk was finished")
 
 // ErrWrongCastType ...
 var ErrWrongCastType = errors.New("something wrong when cast to type")
 
-// VideoProcessFunc ...
-type VideoProcessFunc func(src []byte) error
-
 // WalkRunProcessFunction ...
 var WalkRunProcessFunction = map[string]VideoProcessFunc{
 	"source": SourceProcess,
 	"info":   nil,
+}
+
+// VideoPathOption ...
+func VideoPathOption(path string) WalkOptions {
+	return func(walk *Walk) {
+		walk.VideoPath = path
+	}
+}
+
+// ThumbPathOption ...
+func ThumbPathOption(path string) WalkOptions {
+	return func(walk *Walk) {
+		walk.ThumbPath = path
+	}
+}
+
+// PosterPathOption ...
+func PosterPathOption(path string) WalkOptions {
+	return func(walk *Walk) {
+		walk.PosterPath = path
+	}
+}
+
+// SamplePathOption ...
+func SamplePathOption(path []string) WalkOptions {
+	return func(walk *Walk) {
+		walk.SamplePath = path
+	}
 }
 
 func dummy(v []byte) error {

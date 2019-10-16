@@ -16,6 +16,8 @@ type VideoSource struct {
 	Bangumi      string    `json:"bangumi"`       //番号 no
 	VideoPath    string    `json:"video_path"`    //视频地址
 	SourceHash   string    `json:"source_hash"`   //原片hash
+	ThumbPath    string    `json:"thumb_path"`    //缩略图路径
+	PosterPath   string    `json:"poster_path"`   //海报路径
 	Type         string    `json:"type"`          //类型：film，FanDrama
 	Format       string    `json:"format"`        //输出：3D，2D
 	VR           string    `json:"vr"`            //VR格式：左右，上下，平面
@@ -32,7 +34,6 @@ type VideoSource struct {
 	Key          string    `json:"key"`           //秘钥
 	M3U8         string    `json:"m3u8"`          //M3U8名
 	SegmentFile  string    `json:"segment_file"`  //ts切片名
-	PosterPath   string    `json:"poster_path"`   //海报路径
 	Poster       string    `json:"poster"`        //海报HASH
 	ExtendList   []*Extend `json:"extend_list"`   //扩展信息
 	Role         []string  `json:"role"`          //角色列表 stars
@@ -56,18 +57,27 @@ type VideoSource struct {
 }
 
 // NewSourceWalk ...
-func NewSourceWalk(source *VideoSource) (IWalk, error) {
+func NewSourceWalk(source *VideoSource, options ...WalkOptions) (IWalk, error) {
 	bytes, e := json.Marshal(source)
 	if e != nil {
 		return nil, e
 	}
-	return &Walk{
+	walk := &Walk{
+		VideoPath:  source.VideoPath,
+		PosterPath: source.PosterPath,
+		ThumbPath:  source.Thumb,
+		SamplePath: nil,
 		WalkImpl: WalkImpl{
 			ID:       source.Bangumi,
 			WalkType: "source",
 			Status:   WalkWaiting,
 			Value:    bytes,
-		}}, nil
+		},
+	}
+	for _, opt := range options {
+		opt(walk)
+	}
+	return walk, nil
 }
 
 func decodeSource(src []byte) (*VideoSource, error) {
