@@ -111,7 +111,7 @@ func NewInfoWalk(info *VideoInfo, options ...WalkOptions) (IWalk, error) {
 	}
 	return walk, nil
 }
-func decodeInfo(src []byte) (*VideoInfo, error) {
+func decodeInfo(src []byte) (IVideo, error) {
 	var info VideoInfo
 	e := json.Unmarshal(src, &info)
 	if e != nil {
@@ -120,24 +120,13 @@ func decodeInfo(src []byte) (*VideoInfo, error) {
 	return &info, nil
 }
 
-// InfoProcess ...
-func InfoProcess(ctx context.Context, walk *Walk) error {
+// VideoFromInfo ...
+func VideoFromInfo(ctx context.Context, walk *Walk) error {
 	log.Info("info process run")
 	info, e := decodeInfo(walk.Value)
 	if e != nil {
 		return e
 	}
-	v := info.Video()
-	i, e := InsertOrUpdate(v)
-	if e != nil {
-		return e
-	}
-	if i == 0 {
-		log.With("id", info.ID).Warn("not updated")
-	}
-	e := walk.slice().Do(ctx)
-	if e != nil {
-		return e
-	}
+
 	return nil
 }

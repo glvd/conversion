@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/glvd/split"
@@ -100,8 +101,9 @@ func (s *Slice) Do(ctx context.Context) (e error) {
 		s.scale = res
 	}
 	s.sharpness = strconv.FormatInt(s.Scale(), 10) + "P"
+	s.output = filepath.Join(s.output, UUID().String())
 	if SkipVerifyString("slice", s.skip...) {
-		sa, e := split.FFMpegSplitToM3U8(ctx, s.input, split.StreamFormatOption(s.format), split.ScaleOption(s.Scale()), split.OutputOption(s.output))
+		sa, e := split.FFMpegSplitToM3U8(ctx, s.input, split.StreamFormatOption(s.format), split.ScaleOption(s.Scale()), split.OutputOption(s.output), split.AutoOption(false))
 		if e != nil {
 			return fmt.Errorf("%w", e)
 		}

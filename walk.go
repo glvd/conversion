@@ -52,7 +52,7 @@ type IWalk interface {
 }
 
 // VideoProcessFunc ...
-type VideoProcessFunc func(ctx context.Context, walk *Walk) error
+type VideoProcessFunc func(src []byte) (IVideo, error)
 
 // WalkOptions ...
 type WalkOptions func(walk *Walk)
@@ -65,8 +65,8 @@ var ErrWrongCastType = errors.New("something wrong when cast to type")
 
 // WalkRunProcessFunction ...
 var WalkRunProcessFunction = map[string]VideoProcessFunc{
-	"source": SourceProcess,
-	"info":   InfoProcess,
+	"source": decodeSource,
+	"info":   decodeInfo,
 }
 
 // SkipOption ...
@@ -118,9 +118,9 @@ func SamplePathOption(path []string) WalkOptions {
 	}
 }
 
-func dummy(ctx context.Context, walk *Walk) error {
-	log.With("id", walk.ID()).Panic(walk)
-	return nil
+func dummy(src []byte) (IVideo, error) {
+	log.With("src", string(src)).Panic("dummy")
+	return nil, nil
 }
 
 // Reset ...
@@ -141,6 +141,16 @@ func (w Walk) Walk() Walk {
 
 func (w Walk) slice() *Slice {
 	return NewSlice(w.VideoPath, SliceScale(w.Scale), SliceOutput(w.Output), SliceSkip(w.Skip...))
+}
+
+func (w Walk) video() (IVideo, error) {
+	fn := dummy
+	fn, b := WalkRunProcessFunction[w.WalkType]
+	if !b {
+		fn = dummy
+	}
+	//time.Sleep(5 * time.Second)
+	return fn(w.Value)
 }
 
 // LoadWalk ...
@@ -199,17 +209,22 @@ func (w *Walk) Run(ctx context.Context) (e error) {
 	if err := w.Update(); err != nil {
 		return err
 	}
-	fn := dummy
-	fn, b := WalkRunProcessFunction[w.WalkType]
-	if !b {
-		fn = dummy
-	}
-	//time.Sleep(5 * time.Second)
-	e = fn(ctx, w)
+	v, e := w.video()
 	if e != nil {
 		return e
 	}
-
+	video := v.Video()
+	i, e := InsertOrUpdate(video)
+	if e != nil {
+		return e
+	}
+	if i == 0 {
+		log.With("id", video.ID).Warn("not updated")
+	}
+	e = w.slice().Do(ctx)
+	if e != nil {
+		return e
+	}
 	w.WalkImpl.Status = WalkFinish
 	return w.Update()
 }

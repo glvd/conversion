@@ -1,7 +1,6 @@
 package conversion
 
 import (
-	"context"
 	"encoding/json"
 	"strings"
 )
@@ -81,7 +80,7 @@ func NewSourceWalk(source *VideoSource, options ...WalkOptions) (IWalk, error) {
 	return walk, nil
 }
 
-func decodeSource(src []byte) (*VideoSource, error) {
+func decodeSource(src []byte) (IVideo, error) {
 	var source VideoSource
 	e := json.Unmarshal(src, &source)
 	if e != nil {
@@ -90,8 +89,8 @@ func decodeSource(src []byte) (*VideoSource, error) {
 	return &source, nil
 }
 
-// SourceProcess ...
-func SourceProcess(ctx context.Context, walk *Walk) error {
+// VideoFromSource ...
+func VideoFromSource(walk *Walk) (IVideo, error) {
 	log.Info("source process run")
 	source, e := decodeSource(walk.Value)
 	if e != nil {
