@@ -257,7 +257,7 @@ func (w *Walk) Run(ctx context.Context) (e error) {
 			if e != nil {
 				return e
 			}
-			s, e := AddDir(ctx, f.output)
+			s, e := AddDir(ctx, f.Output())
 			if e != nil {
 				return e
 			}

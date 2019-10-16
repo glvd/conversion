@@ -34,6 +34,10 @@ func (s Fragment) Sharpness() string {
 	return s.sharpness
 }
 
+func (s Fragment) Output() string {
+	return s.output
+}
+
 func toScale(scale int64) Scale {
 	if scale > 1080 {
 		return HighScale
