@@ -1,4 +1,4 @@
-package seed
+package conversion
 
 import (
 	"github.com/glvd/split"

@@ -130,4 +130,3 @@ func scale(scale Scale) int64 {
 		return 720
 	}
 }
-
