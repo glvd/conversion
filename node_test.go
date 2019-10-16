@@ -5,7 +5,7 @@ import "testing"
 func init() {
 	SetNodePath(`D:\workspace\ipfs`)
 	if err := ConnectToNode(); err != nil {
-		panic(err)
+		log.Error(err)
 	}
 }
 

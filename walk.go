@@ -327,9 +327,11 @@ func GetFiles(name string, regex string) (files []string) {
 }
 
 func GetFileIndex(filename string) int {
-	name := filepath.Base(filename)
-	name = FileAbsName(name)
-	last := LastSplit(name, "@")
+	return GetNameIndex(filepath.Base(filename))
+}
+
+func GetNameIndex(name string) int {
+	last := LastSplit(FileAbsName(name), "@")
 	idx := ByteIndex(last[0])
 	if ByteIndex(last[0]) == -1 {
 		return 1
