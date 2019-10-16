@@ -62,6 +62,9 @@ type ISync interface {
 	Sync() error
 }
 
+// FindResult ...
+type FindResult func(rows *xorm.Rows) error
+
 // ConfigOptions ...
 type ConfigOptions func(config *dbConfig)
 
@@ -215,9 +218,6 @@ func InsertOrUpdate(m IModel) (i int64, e error) {
 	}
 	return i, e
 }
-
-// FindResult ...
-type FindResult func(rows *xorm.Rows) error
 
 // FindAll ...
 func FindAll(model IModel, f FindResult, limit int, start ...int) (e error) {
