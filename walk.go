@@ -220,3 +220,15 @@ func GetFiles(name string, regex string) (files []string) {
 	}
 	return files
 }
+
+// SkipVerify ...
+func SkipVerify(tp string, v ...interface{}) bool {
+	for i := range v {
+		if v1, b := (v[i]).(string); b {
+			if v1 == tp {
+				return true
+			}
+		}
+	}
+	return false
+}

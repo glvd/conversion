@@ -2,8 +2,8 @@ package conversion
 
 import (
 	"errors"
-	"fmt"
 	"os"
+	"strconv"
 
 	cmd "github.com/godcong/go-ffmpeg-cmd"
 )
@@ -25,38 +25,74 @@ type SliceCaller interface {
 	Call(*Slice) error
 }
 
+// SliceOptions ...
+type SliceOptions func(slice *Slice)
+
 // Slice ...
 type Slice struct {
-	Scale       Scale
-	SliceOutput string
-	SkipType    []interface{}
-	SkipExist   bool
-	SkipSlice   bool
-	file        string
+	scale     Scale
+	output    string
+	skip      []interface{}
+	skipExist bool
+	input     string
+}
+
+// SliceSkip ...
+func SliceSkip(skip ...interface{}) SliceOptions {
+	return func(slice *Slice) {
+		slice.skip = skip
+	}
+}
+
+// SliceOutput ...
+func SliceOutput(output string) SliceOptions {
+	return func(slice *Slice) {
+		slice.output = output
+	}
+}
+
+// SliceScale ...
+func SliceScale(scale Scale) SliceOptions {
+	return func(slice *Slice) {
+		slice.scale = scale
+	}
 }
 
 // NewSlice ...
-func NewSlice() *Slice {
+func NewSlice(input string, options ...SliceOptions) *Slice {
 	output := os.TempDir()
-	return &Slice{
-		SliceOutput: output,
+	slice := &Slice{
+		output: output,
+		scale:  MiddleScale,
+		input:  input,
 	}
+	for _, opts := range options {
+		opts(slice)
+	}
+	return slice
 }
 
-// SliceCallbackFunc ...
-type SliceCallbackFunc func(s *Slice, sa *cmd.SplitArgs, v interface{}) (e error)
+// Scale ...
+func (s Slice) Scale() int64 {
+	return scale(s.scale)
+}
 
-func scale(scale Scale) int {
+func toScale(scale int64) Scale {
+	if scale > 1080 {
+		return HighScale
+	} else if scale > 720 {
+		return MiddleScale
+	}
+	return LowScale
+}
+
+func scale(scale Scale) int64 {
 	switch scale {
 	case 480, 1080:
-		return int(scale)
+		return int64(scale)
 	default:
 		return 720
 	}
-}
-
-func scaleStr(s Scale) string {
-	return fmt.Sprintf("%dP", scale(s))
 }
 
 func isMedia(format *cmd.StreamFormat) bool {
@@ -68,16 +104,7 @@ func isMedia(format *cmd.StreamFormat) bool {
 	return true
 }
 
-// Call ...
-func (c *sliceCall) Call(s *Slice) (e error) {
-	sa, e := sliceVideo(s, c.file, c.hash)
-	if e != nil {
-		return e
-	}
-	return c.cb(s, sa, c.hash)
-}
-
-func sliceVideo(slice *Slice, file string, u *Hash) (sa *cmd.SplitArgs, e error) {
+func sliceVideo(slice *Slice, file string, hash *Hash) (sa *cmd.SplitArgs, e error) {
 	format, e := cmd.FFProbeStreamFormat(file)
 	if e != nil {
 		return nil, e
@@ -86,28 +113,15 @@ func sliceVideo(slice *Slice, file string, u *Hash) (sa *cmd.SplitArgs, e error)
 		return nil, errors.New("file is not a video/audio")
 	}
 
-	//u.Type = model.TypeSlice
-	s := slice.Scale
-	if s != 0 {
-		res := format.ResolutionInt()
-		if int64(res) < int64(s) {
-			s = Scale(res)
+	if SkipVerify("slice", slice.skip...) {
+		res := toScale(int64(format.ResolutionInt()))
+		if res < slice.scale {
+			slice.scale = res
 		}
-		sa, e = cmd.FFMpegSplitToM3U8(nil, file, cmd.StreamFormatOption(format), cmd.ScaleOption(int64(s)), cmd.OutputOption(slice.SliceOutput))
-		u.Sharpness = scaleStr(s)
-	} else {
-		sa, e = cmd.FFMpegSplitToM3U8(nil, file, cmd.StreamFormatOption(format), cmd.OutputOption(slice.SliceOutput))
-		u.Sharpness = format.Resolution() + "P"
+		sa, e = cmd.FFMpegSplitToM3U8(nil, file, cmd.StreamFormatOption(format), cmd.ScaleOption(slice.Scale()), cmd.OutputOption(slice.output))
+		hash.Sharpness = strconv.FormatInt(slice.Scale(), 10) + "P"
+		log.Infof("%+v", sa)
+		return sa, e
 	}
-
-	log.Infof("%+v", sa)
-	return
+	return nil, errors.New("slice skipped")
 }
-
-type sliceCall struct {
-	cb   SliceCallbackFunc
-	file string
-	hash *Hash
-}
-
-var _ SliceCaller = &sliceCall{}
