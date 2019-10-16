@@ -216,8 +216,11 @@ func InsertOrUpdate(m IModel) (i int64, e error) {
 	return i, e
 }
 
+// FindResult ...
+type FindResult func(rows *xorm.Rows) error
+
 // FindAll ...
-func FindAll(model IModel, f func(rows *xorm.Rows) error, limit int, start ...int) (e error) {
+func FindAll(model IModel, f FindResult, limit int, start ...int) (e error) {
 	table := _database.Table(model.Table())
 	if limit == 0 {
 		return nil
