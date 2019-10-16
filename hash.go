@@ -6,42 +6,34 @@ import (
 	"github.com/go-xorm/xorm"
 )
 
-// Type ...
-type Type string
+// HashType ...
+type HashType string
 
 // TypeOther ...
-const TypeOther Type = "other"
-
-// TypeVideo ...
-const TypeVideo Type = "video"
-
-// TypeSlice ...
-const TypeSlice Type = "slice"
-
-// TypePoster ...
-const TypePoster Type = "poster"
-
-// TypeThumb ...
-const TypeThumb Type = "thumb"
-
-// TypeCaption caption file
-const TypeCaption Type = "caption"
+const (
+	HashTypeOther   HashType = "other"
+	HashTypeVideo   HashType = "video"
+	HashTypeSlice   HashType = "slice"
+	HashTypePoster  HashType = "poster"
+	HashTypeThumb   HashType = "thumb"
+	HashTypeCaption HashType = "caption"
+)
 
 // Hash ...
 type Hash struct {
 	Model       `xorm:"extends"`
-	Checksum    string `xorm:"default() checksum"`            //sum值
-	Type        Type   `xorm:"default() type"`                //类型
-	Relate      string `xorm:"default()" json:"relate"`       //关联信息
-	Name        string `xorm:"default() name"`                //名称
-	Hash        string `xorm:"default() hash"`                //哈希地址
-	Sharpness   string `xorm:"default()" json:"sharpness"`    //清晰度
-	Caption     string `xorm:"default()" json:"caption"`      //字幕
-	Encrypt     bool   `json:"encrypt"`                       //加密
-	Key         string `xorm:"default()" json:"key"`          //秘钥
-	M3U8        string `xorm:"m3u8 default()" json:"m3u8"`    //M3U8名
-	SegmentFile string `xorm:"default()" json:"segment_file"` //ts切片名
-	Resource    string `xorm:"notnull default(0)"`            //资源地址
+	Checksum    string   `xorm:"default() checksum" json:"checksum"`         //sum值
+	HashType    HashType `xorm:"default() hash_type" json:"hash_type"`       //类型
+	Episode     string   `xorm:"default() episode" json:"episode"`           //总集数
+	Name        string   `xorm:"default() name" json:"name"`                 //banno
+	Hash        string   `xorm:"default() hash" json:"hash"`                 //哈希地址
+	Sharpness   string   `xorm:"default() sharpness" json:"sharpness"`       //清晰度
+	Caption     string   `xorm:"default() caption" json:"caption"`           //字幕
+	Encrypt     bool     `xorm:"default() encrypt" json:"encrypt"`           //加密
+	Key         string   `xorm:"default() key" json:"key"`                   //秘钥
+	M3U8        string   `xorm:"default() m3u8" json:"m3u8"`                 //M3U8名
+	SegmentFile string   `xorm:"default() segment_file" json:"segment_file"` //ts切片名
+	Resource    string   `xorm:" default() resource" json:"resource"`        //资源地址
 }
 
 // Table ...
