@@ -4,9 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"github.com/glvd/split"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/gocacher/cacher"
 )
@@ -17,6 +21,9 @@ const (
 	WalkRunning
 	WalkFinish
 )
+
+// RelateList ...
+const relateList = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 // WalkStatus ...
 type WalkStatus int
@@ -32,7 +39,7 @@ type WalkImpl struct {
 // Walk ...
 type Walk struct {
 	WalkImpl
-	VideoPath  string
+	VideoPath  []string
 	PosterPath string
 	ThumbPath  string
 	SamplePath []string
@@ -91,7 +98,7 @@ func OutputPathOption(path string) WalkOptions {
 }
 
 // VideoPathOption ...
-func VideoPathOption(path string) WalkOptions {
+func VideoPathOption(path []string) WalkOptions {
 	return func(walk *Walk) {
 		walk.VideoPath = path
 	}
@@ -138,18 +145,38 @@ func (w *Walk) Status() WalkStatus {
 func (w Walk) Walk() Walk {
 	return w
 }
-
-func (w Walk) slice() *Slice {
-	return NewSlice(w.VideoPath, SliceScale(w.Scale), SliceOutput(w.Output), SliceSkip(w.Skip...))
+func (w Walk) slice(ctx context.Context, input string) (*Fragment, error) {
+	format, e := split.FFProbeStreamFormat(input)
+	if e != nil {
+		return nil, e
+	}
+	if !IsMedia(format) {
+		return nil, errors.New("file is not a video/audio")
+	}
+	res := toScale(int64(format.ResolutionInt()))
+	if res < w.Scale {
+		w.Scale = res
+	}
+	sharpness := strconv.FormatInt(scale(w.Scale), 10) + "P"
+	output := filepath.Join(w.Output, UUID().String())
+	_, e = split.FFMpegSplitToM3U8(ctx, input, split.StreamFormatOption(format), split.ScaleOption(scale(w.Scale)), split.OutputOption(output), split.AutoOption(false))
+	if e != nil {
+		return nil, fmt.Errorf("%w", e)
+	}
+	return &Fragment{
+		scale:     w.Scale,
+		output:    output,
+		skip:      w.Skip,
+		input:     input,
+		sharpness: sharpness,
+	}, nil
 }
 
 func (w Walk) video() (IVideo, error) {
-	fn := dummy
 	fn, b := WalkRunProcessFunction[w.WalkType]
 	if !b {
 		fn = dummy
 	}
-	//time.Sleep(5 * time.Second)
 	return fn(w.Value)
 }
 
@@ -213,18 +240,54 @@ func (w *Walk) Run(ctx context.Context) (e error) {
 	if e != nil {
 		return e
 	}
-	video := v.Video()
-	i, e := InsertOrUpdate(video)
-	if e != nil {
-		return e
+	for _, path := range w.VideoPath {
+		video := v.Video()
+		video.TotalEpisode = strconv.Itoa(len(w.VideoPath))
+
+		if !SkipVerifyString("source", w.Skip...) {
+			s, e := AddFile(ctx, path)
+			if e != nil {
+				return e
+			}
+			video.SourceHash = s
+		}
+
+		if !SkipVerifyString("slice", w.Skip...) {
+			f, e := w.slice(ctx, path)
+			if e != nil {
+				return e
+			}
+			s, e := AddDir(ctx, f.output)
+			if e != nil {
+				return e
+			}
+			video.M3U8Hash = s
+		}
+		if !SkipVerifyString("poster", w.Skip...) {
+			s, e := AddFile(ctx, w.PosterPath)
+			if e != nil {
+				return e
+			}
+			video.PosterHash = s
+		}
+
+		if !SkipVerifyString("thumb", w.Skip...) {
+			s, e := AddFile(ctx, w.ThumbPath)
+			if e != nil {
+				return e
+			}
+			video.ThumbHash = s
+		}
+
+		i, e := InsertOrUpdate(video)
+		if e != nil {
+			return e
+		}
+		if i == 0 {
+			log.With("id", video.ID()).Warn("not updated")
+		}
 	}
-	if i == 0 {
-		log.With("id", video.ID).Warn("not updated")
-	}
-	e = w.slice().Do(ctx)
-	if e != nil {
-		return e
-	}
+
 	w.WalkImpl.Status = WalkFinish
 	return w.Update()
 }
@@ -262,4 +325,51 @@ func GetFiles(name string, regex string) (files []string) {
 		files = append(files, fullPath)
 	}
 	return files
+}
+
+func FileAbsName(filename string) string {
+	_, filename = filepath.Split(filename)
+	for i := len(filename) - 1; i >= 0 && !os.IsPathSeparator(filename[i]); i-- {
+		if filename[i] == '.' {
+			return filename[:i]
+		}
+	}
+	return ""
+}
+
+func FileName(filename string) string {
+	s := []rune(FileAbsName(filename))
+	last := len(s) - 1
+	if last > 0 && unicode.IsLetter(s[last]) {
+		if s[last-1] == '@' {
+			return string(s[:last-1])
+		}
+		//return string(s[:last])
+	}
+	return string(s)
+}
+
+// IndexByte ...
+func IndexByte(index int) byte {
+	if index > len(relateList) {
+		return relateList[0]
+	}
+	return relateList[index]
+}
+
+// ByteIndex ...
+func ByteIndex(idx byte) int {
+	return strings.IndexByte(relateList, idx)
+}
+
+// LastSplit ...
+func LastSplit(s, sep string) string {
+	ss := strings.Split(s, sep)
+	for i := len(ss) - 1; i >= 0; i-- {
+		if ss[i] == "" {
+			continue
+		}
+		return ss[i]
+	}
+	return ""
 }
