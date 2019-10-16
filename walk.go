@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"time"
 
 	"github.com/gocacher/cacher"
 )
@@ -158,27 +157,16 @@ func (w *Walk) Update() error {
 
 // Run ...
 func (w *Walk) Run(ctx context.Context) (e error) {
-	switch w.WalkImpl.Status {
-	case WalkFinish:
-		log.With("id", w.ID()).Warn("walk was finished")
-		return nil
-	case WalkRunning:
-		log.With("id", w.ID()).Warn("walk was running")
-		return nil
-	case WalkWaiting:
-		w.WalkImpl.Status = WalkRunning
-		if err := w.Update(); err != nil {
-			return err
-		}
-	default:
-		log.With("id", w.ID()).Panic("walk status wrong")
+	w.WalkImpl.Status = WalkRunning
+	if err := w.Update(); err != nil {
+		return err
 	}
 	fn := dummy
 	fn, b := WalkRunProcessFunction[w.WalkType]
 	if !b {
 		fn = dummy
 	}
-	time.Sleep(5 * time.Second)
+	//time.Sleep(5 * time.Second)
 	e = fn(w.Value)
 	if e != nil {
 		return e

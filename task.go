@@ -98,10 +98,23 @@ func (t *Task) Start() error {
 							}
 						}
 						log.With("id", walk.ID()).Info("queue")
-						e = walk.Run(t.Context)
-						if e != nil {
-							log.With("id", walk.ID()).Error("run:", e)
+						switch walk.Status() {
+						case WalkFinish:
+							log.With("id", walk.ID()).Warn("walk was finished")
+							continue
+						case WalkRunning:
+							log.With("id", walk.ID()).Warn("walk was running")
+							continue
+						case WalkWaiting:
+							e = walk.Run(t.Context)
+							if e != nil {
+								log.With("id", walk.ID()).Error("run:", e)
+							}
+						default:
+							log.With("id", walk.ID()).Panic("walk status wrong")
+							continue
 						}
+						log.With("id", walk.ID()).Info("run end")
 						t.running.Delete(walk.ID())
 					}
 					continue

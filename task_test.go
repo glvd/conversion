@@ -11,7 +11,7 @@ import (
 func TestTask_Start(t *testing.T) {
 	task := NewTask()
 	for i := 0; i < 100; i++ {
-		id := tool.GenerateRandomString(10)
+		id := tool.GenerateRandomString(2)
 		v, e := NewSourceWalk(&VideoSource{
 			Bangumi: id,
 		})
@@ -22,7 +22,7 @@ func TestTask_Start(t *testing.T) {
 		if e != nil {
 			t.Fatal(e)
 		}
-		id = tool.GenerateRandomString(10)
+		id = tool.GenerateRandomString(2)
 		v1, e1 := NewInfoWalk(&VideoInfo{
 			ID: id,
 		})
