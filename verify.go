@@ -42,7 +42,7 @@ func ExistVerifyString(tp string, v ...string) bool {
 	return false
 }
 
-// ExistVerify ...
+// ExistVerifyFunc ...
 func ExistVerifyFunc(tp string, f func(interface{}) string, v ...interface{}) bool {
 	for i := range v {
 		if f(v[i]) == tp {
