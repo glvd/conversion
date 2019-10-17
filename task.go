@@ -169,17 +169,16 @@ func (t *Task) Start() error {
 					if s, b := v.(string); b {
 						walk, e := LoadWalk(s)
 						if e != nil {
-							log.With("id", s).Error(e)
+							log.With("id", s, "error", e).Error("load walk")
 							continue
 						}
 						if !t.IsRunning(walk.ID()) && walk.Status() == WalkRunning {
 							e := walk.Reset()
 							if e != nil {
-								log.With("id", walk.ID()).Error(e)
+								log.With("id", walk.ID(), "error", e).Error("reset")
 								continue
 							}
 						}
-						log.With("id", walk.ID()).Info("queue")
 						switch walk.Status() {
 						case WalkFinish:
 							log.With("id", walk.ID()).Warn("walk was finished")
@@ -188,19 +187,20 @@ func (t *Task) Start() error {
 							log.With("id", walk.ID()).Warn("walk was running")
 							continue
 						case WalkWaiting:
+							log.With("id", walk.ID()).Info("walk run")
 							e := DeleteTaskMessage(walk.ID())
 							if e != nil {
-								log.With("id", walk.ID()).Error("before run:", e)
+								log.With("id", walk.ID(), "error", e).Error("before run")
 							}
 							e = walk.Run(t.context)
 							if e != nil {
-								log.With("id", walk.ID()).Error("run:", e)
+								log.With("id", walk.ID(), "error", e).Error("run")
 							}
 						default:
 							log.With("id", walk.ID()).Panic("walk status wrong")
 							continue
 						}
-						log.With("id", walk.ID()).Info("run end")
+						log.With("id", walk.ID()).Info("end run")
 						t.running.Delete(walk.ID())
 					}
 					continue
@@ -208,6 +208,7 @@ func (t *Task) Start() error {
 				if t.AutoStop() {
 					break WalkEnd
 				}
+				//service waiting for new walk
 				time.Sleep(30 * time.Second)
 			}
 		}(&wg)
