@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/glvd/split"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"unicode"
+
+	"github.com/glvd/split"
 
 	"github.com/gocacher/cacher"
 )
@@ -44,7 +45,7 @@ type Walk struct {
 	ThumbPath  string
 	SamplePath []string
 	Scale      Scale
-	Output     string
+	output     string
 	Skip       []string
 }
 
@@ -93,7 +94,7 @@ func ScaleOption(scale Scale) WalkOptions {
 // OutputPathOption ...
 func OutputPathOption(path string) WalkOptions {
 	return func(walk *Walk) {
-		walk.Output = path
+		walk.output = path
 	}
 }
 
@@ -141,6 +142,14 @@ func (w *Walk) Status() WalkStatus {
 	return w.WalkImpl.Status
 }
 
+// Output ...
+func (w Walk) Output() string {
+	if w.output == "" {
+		return "tmp"
+	}
+	return w.output
+}
+
 // Walk ...
 func (w Walk) Walk() Walk {
 	return w
@@ -148,7 +157,7 @@ func (w Walk) Walk() Walk {
 func (w Walk) slice(ctx context.Context, input string) (*Fragment, error) {
 	format, e := split.FFProbeStreamFormat(input)
 	if e != nil {
-		return nil, e
+		return nil, Wrap(e)
 	}
 	if !IsMedia(format) {
 		return nil, errors.New("file is not a video/audio")
@@ -158,14 +167,15 @@ func (w Walk) slice(ctx context.Context, input string) (*Fragment, error) {
 		w.Scale = res
 	}
 	sharpness := strconv.FormatInt(scale(w.Scale), 10) + "P"
-	output := filepath.Join(w.Output, UUID().String())
-	_, e = split.FFMpegSplitToM3U8(ctx, input, split.StreamFormatOption(format), split.ScaleOption(scale(w.Scale)), split.OutputOption(output), split.AutoOption(false))
+
+	//output := filepath.Join(w.Output, UUID().String())
+	sa, e := split.FFMpegSplitToM3U8(ctx, input, split.StreamFormatOption(format), split.ScaleOption(scale(w.Scale)), split.OutputOption(w.Output()), split.AutoOption(true))
 	if e != nil {
-		return nil, fmt.Errorf("%w", e)
+		return nil, Wrap(e)
 	}
 	return &Fragment{
 		scale:     w.Scale,
-		output:    output,
+		output:    sa.Output,
 		skip:      w.Skip,
 		input:     input,
 		sharpness: sharpness,
@@ -234,20 +244,23 @@ func (w *Walk) Update() error {
 func (w *Walk) Run(ctx context.Context) (e error) {
 	w.WalkImpl.Status = WalkRunning
 	if err := w.Update(); err != nil {
-		return err
+		return Wrap(err)
 	}
 	v, e := w.video()
 	if e != nil {
-		return e
+		return Wrap(e)
 	}
 	for _, path := range w.VideoPath {
+		if path == "" {
+			continue
+		}
 		video := v.Video()
 		video.TotalEpisode = strconv.Itoa(len(w.VideoPath))
 		video.Episode = strconv.Itoa(GetFileIndex(path))
 		if !SkipVerifyString("source", w.Skip...) {
 			s, e := AddFile(ctx, path)
 			if e != nil {
-				return e
+				return Wrap(e)
 			}
 			video.SourceHash = s
 		}
@@ -255,33 +268,33 @@ func (w *Walk) Run(ctx context.Context) (e error) {
 		if !SkipVerifyString("slice", w.Skip...) {
 			f, e := w.slice(ctx, path)
 			if e != nil {
-				return e
+				return Wrap(e)
 			}
 			s, e := AddDir(ctx, f.Output())
 			if e != nil {
-				return e
+				return Wrap(e)
 			}
 			video.M3U8Hash = s
 		}
-		if !SkipVerifyString("poster", w.Skip...) {
+		if !SkipVerifyString("poster", w.Skip...) && w.PosterPath != "" {
 			s, e := AddFile(ctx, w.PosterPath)
 			if e != nil {
-				return e
+				return Wrap(e)
 			}
 			video.PosterHash = s
 		}
 
-		if !SkipVerifyString("thumb", w.Skip...) {
+		if !SkipVerifyString("thumb", w.Skip...) && w.PosterPath != "" {
 			s, e := AddFile(ctx, w.ThumbPath)
 			if e != nil {
-				return e
+				return Wrap(e)
 			}
 			video.ThumbHash = s
 		}
 
 		i, e := InsertOrUpdate(video)
 		if e != nil {
-			return e
+			return Wrap(e)
 		}
 		if i == 0 {
 			log.With("id", video.ID()).Warn("not updated")
@@ -289,7 +302,7 @@ func (w *Walk) Run(ctx context.Context) (e error) {
 	}
 
 	w.WalkImpl.Status = WalkFinish
-	return w.Update()
+	return Wrap(w.Update())
 }
 
 // GetFiles ...
@@ -388,4 +401,9 @@ func LastSplit(s, sep string) string {
 		return ss[i]
 	}
 	return ""
+}
+
+// Wrap ...
+func Wrap(err error) error {
+	return fmt.Errorf("%w", err)
 }

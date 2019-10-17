@@ -35,7 +35,7 @@ type Video struct {
 	Caption      string   `xorm:"caption" json:"caption"`             //字幕
 	Group        string   `xorm:"group" json:"-"`                     //分组
 	Index        string   `xorm:"index" json:"-"`                     //索引
-	Date         string   `xorm:"date" json:"date"`                   //发行日期
+	Date         string   `xorm:"'date''" json:"date"`                //发行日期
 	Sharpness    string   `xorm:"sharpness" json:"sharpness"`         //清晰度
 	Series       string   `xorm:"series" json:"series"`               //系列
 	Tags         []string `xorm:"json tags" json:"tags"`              //标签

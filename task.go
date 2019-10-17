@@ -3,7 +3,9 @@ package conversion
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"sync"
+	"time"
 
 	"github.com/gocacher/cacher"
 )
@@ -19,7 +21,8 @@ const (
 
 // Task ...
 type Task struct {
-	Context context.Context
+	context context.Context
+	cancel  context.CancelFunc
 	running sync.Map
 	queue   sync.Pool
 	Limit   int
@@ -67,8 +70,18 @@ func (t *Task) AddWalker(walk IWalk) error {
 	return nil
 }
 
+// Stop ...
+func (t *Task) Stop() {
+	if t.cancel != nil {
+		t.cancel()
+	}
+}
+
 // Start ...
 func (t *Task) Start() error {
+	if !CheckDatabase() || !CheckNode() {
+		return errors.New("service was not ready")
+	}
 	ss, e := LoadTask()
 	if e != nil {
 		return e
@@ -82,6 +95,12 @@ func (t *Task) Start() error {
 		go func(wg *sync.WaitGroup) {
 			defer wg.Done()
 			for {
+				select {
+				case <-t.context.Done():
+					log.With("error", t.context.Err()).Error("done")
+					return
+				default:
+				}
 				if v := t.queue.Get(); v != nil {
 					if s, b := v.(string); b {
 						walk, e := LoadWalk(s)
@@ -106,7 +125,7 @@ func (t *Task) Start() error {
 							log.With("id", walk.ID()).Warn("walk was running")
 							continue
 						case WalkWaiting:
-							e = walk.Run(t.Context)
+							e = walk.Run(t.context)
 							if e != nil {
 								log.With("id", walk.ID()).Error("run:", e)
 							}
@@ -119,7 +138,7 @@ func (t *Task) Start() error {
 					}
 					continue
 				}
-				break
+				time.Sleep(30 * time.Second)
 			}
 		}(&wg)
 	}
@@ -130,8 +149,11 @@ func (t *Task) Start() error {
 
 // NewTask ...
 func NewTask() *Task {
+	ctx, cancel := context.WithCancel(context.Background())
+
 	return &Task{
-		Context: context.Background(),
+		context: ctx,
+		cancel:  cancel,
 		Limit:   DefaultLimit,
 		queue:   sync.Pool{},
 	}
