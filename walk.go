@@ -327,10 +327,12 @@ func GetFiles(name string, regex string) (files []string) {
 	return files
 }
 
+// GetFileIndex ...
 func GetFileIndex(filename string) int {
 	return GetNameIndex(filepath.Base(filename))
 }
 
+// GetNameIndex ...
 func GetNameIndex(name string) int {
 	last := LastSplit(FileAbsName(name), "@")
 	idx := ByteIndex(last[0])
@@ -340,6 +342,7 @@ func GetNameIndex(name string) int {
 	return idx + 1
 }
 
+// FileAbsName ...
 func FileAbsName(filename string) string {
 	_, filename = filepath.Split(filename)
 	for i := len(filename) - 1; i >= 0 && !os.IsPathSeparator(filename[i]); i-- {
@@ -350,6 +353,7 @@ func FileAbsName(filename string) string {
 	return ""
 }
 
+// FileName ...
 func FileName(filename string) string {
 	s := []rune(FileAbsName(filename))
 	last := len(s) - 1

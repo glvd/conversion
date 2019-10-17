@@ -66,6 +66,7 @@ func CheckNode() bool {
 	return true
 }
 
+// ResolvedHash ...
 func ResolvedHash(path path.Resolved) (string, error) {
 	ss := strings.Split(path.String(), "/")
 	if len(ss) == 3 {
@@ -117,6 +118,7 @@ func AddDir(ctx context.Context, dir string) (string, error) {
 	return ResolvedHash(resolved)
 }
 
+// PinHash ...
 func PinHash(ctx context.Context, hash string) error {
 	return _cli.Pin().Add(ctx, path.New(hash), func(settings *options.PinAddSettings) error {
 		settings.Recursive = true
@@ -124,6 +126,7 @@ func PinHash(ctx context.Context, hash string) error {
 	})
 }
 
+// UnpinHash ...
 func UnpinHash(ctx context.Context, hash string) error {
 	return _cli.Pin().Rm(ctx, path.New(hash), func(settings *options.PinRmSettings) error {
 		settings.Recursive = true
@@ -131,6 +134,7 @@ func UnpinHash(ctx context.Context, hash string) error {
 	})
 }
 
+// PinCheck ...
 func PinCheck(ctx context.Context, hash ...string) (int, error) {
 	pins, e := _cli.Pin().Ls(ctx, func(settings *options.PinLsSettings) error {
 		settings.Type = "recursive"
@@ -143,7 +147,6 @@ func PinCheck(ctx context.Context, hash ...string) (int, error) {
 		for _, pin := range pins {
 			if hash, err := ResolvedHash(pin.Path()); err != nil {
 				return i, err
-			} else {
 				if hash == v {
 					break
 				}

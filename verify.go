@@ -21,6 +21,7 @@ func IsVideo(filename string) bool {
 	return strings.Index(video, ext) != -1
 }
 
+// IsMedia ...
 func IsMedia(format *split.StreamFormat) bool {
 	video := format.Video()
 	audio := format.Audio()

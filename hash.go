@@ -3,7 +3,7 @@ package conversion
 import (
 	"errors"
 
-	"github.com/go-xorm/xorm"
+	"github.com/xormsharp/xorm"
 )
 
 // HashType ...

@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/go-xorm/xorm"
 	"github.com/google/uuid"
 	"github.com/mattn/go-sqlite3"
+	"github.com/xormsharp/xorm"
 )
 
 const mysqlStatement = "%s:%s@tcp(%s)/%s?loc=%s&charset=%s&parseTime=true"

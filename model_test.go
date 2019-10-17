@@ -3,7 +3,7 @@ package conversion
 import (
 	"testing"
 
-	"github.com/go-xorm/xorm"
+	"github.com/xormsharp/xorm"
 )
 
 func init() {

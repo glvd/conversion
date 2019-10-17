@@ -34,6 +34,7 @@ func (s Fragment) Sharpness() string {
 	return s.sharpness
 }
 
+// Output ...
 func (s Fragment) Output() string {
 	return s.output
 }
