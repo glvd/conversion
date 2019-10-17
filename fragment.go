@@ -26,7 +26,7 @@ type Fragment struct {
 
 // Scale ...
 func (s Fragment) Scale() int64 {
-	return scale(s.scale)
+	return formatScale(s.scale)
 }
 
 // Sharpness ...
@@ -39,7 +39,7 @@ func (s Fragment) Output() string {
 	return s.output
 }
 
-func toScale(scale int64) Scale {
+func parseScale(scale int64) Scale {
 	if scale > 1080 {
 		return HighScale
 	} else if scale > 720 {
@@ -48,7 +48,7 @@ func toScale(scale int64) Scale {
 	return LowScale
 }
 
-func scale(scale Scale) int64 {
+func formatScale(scale Scale) int64 {
 	switch scale {
 	case 480, 1080:
 		return int64(scale)

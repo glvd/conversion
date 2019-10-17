@@ -63,10 +63,10 @@ func NewSourceWork(source *VideoSource, options ...WorkOptions) (IWork, error) {
 		return nil, e
 	}
 	Work := &Work{
-		VideoPath:  source.VideoPath,
-		PosterPath: source.PosterPath,
-		ThumbPath:  source.Thumb,
-		SamplePath: nil,
+		videoPaths: source.VideoPath,
+		posterPath: source.PosterPath,
+		thumbPath:  source.Thumb,
+		samplePath: nil,
 		WorkImpl: WorkImpl{
 			ID:       source.Bangumi,
 			WorkType: "source",

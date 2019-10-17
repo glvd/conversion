@@ -10,8 +10,7 @@ import (
 
 // Video ...
 type Video struct {
-	Model `xorm:"extends" json:"-"`
-	//FindNo       string    `xorm:"find_no" json:"-"`               //查找号
+	Model        `xorm:"extends" json:"-"`
 	BanNo        string   `xorm:"ban_no" json:"ban_no"`               //番号
 	Intro        string   `xorm:"varchar(2048)" json:"intro"`         //简介
 	Alias        []string `xorm:"json" json:"alias"`                  //别名，片名
