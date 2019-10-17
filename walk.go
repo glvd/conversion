@@ -302,7 +302,10 @@ func (w *Walk) Run(ctx context.Context) (e error) {
 	}
 
 	w.WalkImpl.Status = WalkFinish
-	return Wrap(w.Update())
+	if err := w.Update(); err != nil {
+		return Wrap(err)
+	}
+	return nil
 }
 
 // GetFiles ...
