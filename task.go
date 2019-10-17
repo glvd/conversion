@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gocacher/cacher"
+	"go.uber.org/atomic"
 )
 
 // RunType ...
@@ -21,43 +22,76 @@ const (
 
 // Task ...
 type Task struct {
-	context context.Context
-	cancel  context.CancelFunc
-	running sync.Map
-	queue   sync.Pool
-	Limit   int
+	context  context.Context
+	cancel   context.CancelFunc
+	running  sync.Map
+	queue    sync.Pool
+	autoStop *atomic.Bool
+	Limit    int
+}
+
+// AutoStop ...
+func (t Task) AutoStop() bool {
+	return t.autoStop.Load()
+}
+
+// SetAutoStop ...
+func (t *Task) SetAutoStop(autoStop bool) {
+	t.autoStop.Store(autoStop)
 }
 
 // DefaultLimit ...
-var DefaultLimit = 5
+var DefaultLimit = 3
 
-// StoreTask ...
-func StoreTask(s []string) error {
-	bytes, e := json.Marshal(s)
+// PoolMessage ...
+type PoolMessage map[string][]byte
+
+// AddTaskMessage ...
+func AddTaskMessage(s string) error {
+	messages, e := LoadTaskMessage()
 	if e != nil {
 		return e
 	}
-	return cacher.Set("task", bytes)
+	messages[s] = nil
+	bytes, e := json.Marshal(messages)
+	if e != nil {
+		return Wrap(e)
+	}
+	return Wrap(cacher.Set("task", bytes))
 }
 
-// LoadTask ...
-func LoadTask() ([]string, error) {
+// DeleteTaskMessage ...
+func DeleteTaskMessage(s string) error {
+	messages, e := LoadTaskMessage()
+	if e != nil {
+		return Wrap(e)
+	}
+	delete(messages, s)
+	bytes, e := json.Marshal(messages)
+	if e != nil {
+		return Wrap(e)
+	}
+	return Wrap(cacher.Set("task", bytes))
+}
+
+// LoadTaskMessage ...
+func LoadTaskMessage() (PoolMessage, error) {
 	b, e := cacher.Has("task")
 	if e != nil {
-		return nil, e
+		return nil, Wrap(e)
 	}
-	var s []string
+	msg := make(PoolMessage)
 	if b {
 		bytes, e := cacher.Get("task")
 		if e != nil {
-			return nil, e
+			return nil, Wrap(e)
 		}
-		e = json.Unmarshal(bytes, &s)
+		e = json.Unmarshal(bytes, &msg)
 		if e != nil {
-			return nil, e
+			return nil, Wrap(e)
 		}
 	}
-	return s, nil
+	return msg, nil
 }
 
 // AddWalker ...
@@ -82,7 +116,7 @@ func (t *Task) Start() error {
 	if !CheckDatabase() || !CheckNode() {
 		return errors.New("service was not ready")
 	}
-	ss, e := LoadTask()
+	ss, e := LoadTaskMessage()
 	if e != nil {
 		return e
 	}
@@ -94,6 +128,7 @@ func (t *Task) Start() error {
 		wg.Add(1)
 		go func(wg *sync.WaitGroup) {
 			defer wg.Done()
+		WalkEnd:
 			for {
 				select {
 				case <-t.context.Done():
@@ -138,6 +173,9 @@ func (t *Task) Start() error {
 					}
 					continue
 				}
+				if t.AutoStop() {
+					break WalkEnd
+				}
 				time.Sleep(30 * time.Second)
 			}
 		}(&wg)
@@ -152,9 +190,11 @@ func NewTask() *Task {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &Task{
-		context: ctx,
-		cancel:  cancel,
-		Limit:   DefaultLimit,
-		queue:   sync.Pool{},
+		context:  ctx,
+		cancel:   cancel,
+		running:  sync.Map{},
+		queue:    sync.Pool{},
+		autoStop: atomic.NewBool(true),
+		Limit:    DefaultLimit,
 	}
 }

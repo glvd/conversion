@@ -16,4 +16,5 @@ require (
 	github.com/mattn/go-sqlite3 v1.11.0
 	github.com/sirupsen/logrus v1.4.0 // indirect
 	github.com/xormsharp/xorm v1.0.0
+	go.uber.org/atomic v1.4.0
 )

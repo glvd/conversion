@@ -11,7 +11,7 @@ import (
 func TestTask_Start(t *testing.T) {
 	task := NewTask()
 	for i := 0; i < 5; i++ {
-		id := tool.GenerateRandomString(2)
+		id := tool.GenerateRandomString(5)
 		v, e := NewSourceWalk(&VideoSource{
 			VideoPath: []string{"D:\\video\\demo-r-24.mp4"},
 			Bangumi:   id,
