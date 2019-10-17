@@ -302,10 +302,7 @@ func (w *Walk) Run(ctx context.Context) (e error) {
 	}
 
 	w.WalkImpl.Status = WalkFinish
-	if err := w.Update(); err != nil {
-		return Wrap(err)
-	}
-	return nil
+	return Wrap(w.Update())
 }
 
 // GetFiles ...
@@ -408,5 +405,8 @@ func LastSplit(s, sep string) string {
 
 // Wrap ...
 func Wrap(err error) error {
+	if err == nil {
+		return nil
+	}
 	return fmt.Errorf("%w", err)
 }
