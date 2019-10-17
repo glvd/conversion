@@ -100,6 +100,10 @@ func (t *Task) AddWalker(walk IWalk) error {
 	if err := walk.Store(); err != nil {
 		return err
 	}
+	e := AddTaskMessage(walk.ID())
+	if e != nil {
+		return Wrap(e)
+	}
 	t.queue.Put(walk.ID())
 	return nil
 }
@@ -111,18 +115,27 @@ func (t *Task) Stop() {
 	}
 }
 
+// Restore ...
+func (t *Task) Restore() error {
+	ss, e := LoadTaskMessage()
+	if e != nil {
+		return Wrap(e)
+	}
+	for k := range ss {
+		t.queue.Put(k)
+	}
+	return nil
+}
+
 // Start ...
 func (t *Task) Start() error {
 	if !CheckDatabase() || !CheckNode() {
 		return errors.New("service was not ready")
 	}
-	ss, e := LoadTaskMessage()
-	if e != nil {
-		return e
+	if err := t.Restore(); err != nil {
+		return Wrap(err)
 	}
-	for _, s := range ss {
-		t.queue.Put(s)
-	}
+
 	wg := sync.WaitGroup{}
 	for i := 0; i < t.Limit; i++ {
 		wg.Add(1)
@@ -160,6 +173,10 @@ func (t *Task) Start() error {
 							log.With("id", walk.ID()).Warn("walk was running")
 							continue
 						case WalkWaiting:
+							e := DeleteTaskMessage(walk.ID())
+							if e != nil {
+								log.With("id", walk.ID()).Error("before run:", e)
+							}
 							e = walk.Run(t.context)
 							if e != nil {
 								log.With("id", walk.ID()).Error("run:", e)
