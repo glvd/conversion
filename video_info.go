@@ -92,24 +92,24 @@ func (v VideoInfo) Video() *Video {
 	}
 }
 
-// NewInfoWalk ...
-func NewInfoWalk(info *VideoInfo, options ...WalkOptions) (IWalk, error) {
+// NewInfoWork ...
+func NewInfoWork(info *VideoInfo, options ...WorkOptions) (IWork, error) {
 	bytes, e := json.Marshal(info)
 	if e != nil {
 		return nil, e
 	}
-	walk := &Walk{
-		WalkImpl: WalkImpl{
+	Work := &Work{
+		WorkImpl: WorkImpl{
 			ID:       info.ID,
-			WalkType: "info",
-			Status:   WalkWaiting,
+			WorkType: "info",
+			Status:   WorkWaiting,
 			Value:    bytes,
 		},
 	}
 	for _, opt := range options {
-		opt(walk)
+		opt(Work)
 	}
-	return walk, nil
+	return Work, nil
 }
 func decodeInfo(src []byte) (IVideo, error) {
 	var info VideoInfo
@@ -121,9 +121,9 @@ func decodeInfo(src []byte) (IVideo, error) {
 }
 
 // VideoFromInfo ...
-func VideoFromInfo(ctx context.Context, walk *Walk) (IVideo, error) {
+func VideoFromInfo(ctx context.Context, Work *Work) (IVideo, error) {
 	log.Info("info process run")
-	info, e := decodeInfo(walk.Value)
+	info, e := decodeInfo(Work.Value)
 	if e != nil {
 		return nil, e
 	}

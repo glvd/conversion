@@ -31,7 +31,7 @@ type Task struct {
 }
 
 // AutoStop ...
-func (t Task) AutoStop() bool {
+func (t *Task) AutoStop() bool {
 	return t.autoStop.Load()
 }
 
@@ -94,17 +94,17 @@ func LoadTaskMessage() (PoolMessage, error) {
 	return msg, nil
 }
 
-// AddWalker ...
-func (t *Task) AddWalker(walk IWalk) error {
-	log.With("id", walk.ID()).Info("add walk")
-	if err := walk.Store(); err != nil {
+// AddWorker ...
+func (t *Task) AddWorker(Work IWork) error {
+	log.With("id", Work.ID()).Info("add Work")
+	if err := Work.Store(); err != nil {
 		return err
 	}
-	e := AddTaskMessage(walk.ID())
+	e := AddTaskMessage(Work.ID())
 	if e != nil {
 		return Wrap(e)
 	}
-	t.queue.Put(walk.ID())
+	t.queue.Put(Work.ID())
 	return nil
 }
 
@@ -132,14 +132,14 @@ func (t *Task) IsRunning(id string) (b bool) {
 	_, b = t.running.LoadOrStore(id, nil)
 	return
 	//if !b && {
-	//log.With("id", walk.ID()).Warn("reset status")
-	//e := walk.Reset()
+	//log.With("id", Work.ID()).Warn("reset status")
+	//e := Work.Reset()
 	//if e != nil {
-	//	log.With("id", walk.ID()).Error("reset:", e)
+	//	log.With("id", Work.ID()).Error("reset:", e)
 	//}
-	//return fmt.Errorf("walk:%s is not running", walk.ID())
+	//return fmt.Errorf("Work:%s is not running", Work.ID())
 	//}
-	//return IWalk, nil
+	//return IWork, nil
 }
 
 // Start ...
@@ -156,7 +156,7 @@ func (t *Task) Start() error {
 		wg.Add(1)
 		go func(wg *sync.WaitGroup) {
 			defer wg.Done()
-		WalkEnd:
+		WorkEnd:
 			for {
 				select {
 				case <-t.context.Done():
@@ -167,48 +167,48 @@ func (t *Task) Start() error {
 
 				if v := t.queue.Get(); v != nil {
 					if s, b := v.(string); b {
-						walk, e := LoadWalk(s)
+						Work, e := LoadWork(s)
 						if e != nil {
-							log.With("id", s, "error", e).Error("load walk")
+							log.With("id", s, "error", e).Error("load Work")
 							continue
 						}
-						if !t.IsRunning(walk.ID()) && walk.Status() == WalkRunning {
-							e := walk.Reset()
+						if !t.IsRunning(Work.ID()) && Work.Status() == WorkRunning {
+							e := Work.Reset()
 							if e != nil {
-								log.With("id", walk.ID(), "error", e).Error("reset")
+								log.With("id", Work.ID(), "error", e).Error("reset")
 								continue
 							}
 						}
-						switch walk.Status() {
-						case WalkFinish:
-							log.With("id", walk.ID()).Warn("walk was finished")
+						switch Work.Status() {
+						case WorkFinish:
+							log.With("id", Work.ID()).Warn("Work was finished")
 							continue
-						case WalkRunning:
-							log.With("id", walk.ID()).Warn("walk was running")
+						case WorkRunning:
+							log.With("id", Work.ID()).Warn("Work was running")
 							continue
-						case WalkWaiting:
-							log.With("id", walk.ID()).Info("walk run")
-							e := DeleteTaskMessage(walk.ID())
+						case WorkWaiting:
+							log.With("id", Work.ID()).Info("Work run")
+							e := DeleteTaskMessage(Work.ID())
 							if e != nil {
-								log.With("id", walk.ID(), "error", e).Error("before run")
+								log.With("id", Work.ID(), "error", e).Error("before run")
 							}
-							e = walk.Run(t.context)
+							e = Work.Run(t.context)
 							if e != nil {
-								log.With("id", walk.ID(), "error", e).Error("run")
+								log.With("id", Work.ID(), "error", e).Error("run")
 							}
 						default:
-							log.With("id", walk.ID()).Panic("walk status wrong")
+							log.With("id", Work.ID()).Panic("Work status wrong")
 							continue
 						}
-						log.With("id", walk.ID()).Info("end run")
-						t.running.Delete(walk.ID())
+						log.With("id", Work.ID()).Info("end run")
+						t.running.Delete(Work.ID())
 					}
 					continue
 				}
 				if t.AutoStop() {
-					break WalkEnd
+					break WorkEnd
 				}
-				//service waiting for new walk
+				//service waiting for new Work
 				time.Sleep(30 * time.Second)
 			}
 		}(&wg)

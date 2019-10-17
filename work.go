@@ -16,30 +16,30 @@ import (
 	"github.com/gocacher/cacher"
 )
 
-// WalkRunning ...
+// WorkRunning ...
 const (
-	WalkWaiting WalkStatus = iota + 1
-	WalkRunning
-	WalkFinish
+	WorkWaiting WorkStatus = iota + 1
+	WorkRunning
+	WorkFinish
 )
 
 // RelateList ...
 const relateList = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-// WalkStatus ...
-type WalkStatus int
+// WorkStatus ...
+type WorkStatus int
 
-// WalkImpl ...
-type WalkImpl struct {
+// WorkImpl ...
+type WorkImpl struct {
 	ID       string
-	WalkType string
-	Status   WalkStatus
+	WorkType string
+	Status   WorkStatus
 	Value    []byte
 }
 
-// Walk ...
-type Walk struct {
-	WalkImpl
+// Work ...
+type Work struct {
+	WorkImpl
 	VideoPath  []string
 	PosterPath string
 	ThumbPath  string
@@ -49,80 +49,80 @@ type Walk struct {
 	Skip       []string
 }
 
-// IWalk ...
-type IWalk interface {
+// IWork ...
+type IWork interface {
 	ID() string
 	Update() error
 	Store() error
 	Reset() error
-	Status() WalkStatus
+	Status() WorkStatus
 	Run(ctx context.Context) (e error)
 }
 
 // VideoProcessFunc ...
 type VideoProcessFunc func(src []byte) (IVideo, error)
 
-// WalkOptions ...
-type WalkOptions func(walk *Walk)
+// WorkOptions ...
+type WorkOptions func(Work *Work)
 
-// ErrWalkFinish ...
-var ErrWalkFinish = errors.New("walk was finished")
+// ErrWorkFinish ...
+var ErrWorkFinish = errors.New("Work was finished")
 
 // ErrWrongCastType ...
 var ErrWrongCastType = errors.New("something wrong when cast to type")
 
-// WalkRunProcessFunction ...
-var WalkRunProcessFunction = map[string]VideoProcessFunc{
+// WorkRunProcessFunction ...
+var WorkRunProcessFunction = map[string]VideoProcessFunc{
 	"source": decodeSource,
 	"info":   decodeInfo,
 }
 
 // SkipOption ...
-func SkipOption(skip ...string) WalkOptions {
-	return func(walk *Walk) {
-		walk.Skip = skip
+func SkipOption(skip ...string) WorkOptions {
+	return func(Work *Work) {
+		Work.Skip = skip
 	}
 }
 
 // ScaleOption ...
-func ScaleOption(scale Scale) WalkOptions {
-	return func(walk *Walk) {
-		walk.Scale = scale
+func ScaleOption(scale Scale) WorkOptions {
+	return func(Work *Work) {
+		Work.Scale = scale
 	}
 }
 
 // OutputPathOption ...
-func OutputPathOption(path string) WalkOptions {
-	return func(walk *Walk) {
-		walk.output = path
+func OutputPathOption(path string) WorkOptions {
+	return func(Work *Work) {
+		Work.output = path
 	}
 }
 
 // VideoPathOption ...
-func VideoPathOption(path []string) WalkOptions {
-	return func(walk *Walk) {
-		walk.VideoPath = path
+func VideoPathOption(path []string) WorkOptions {
+	return func(Work *Work) {
+		Work.VideoPath = path
 	}
 }
 
 // ThumbPathOption ...
-func ThumbPathOption(path string) WalkOptions {
-	return func(walk *Walk) {
-		walk.ThumbPath = path
+func ThumbPathOption(path string) WorkOptions {
+	return func(Work *Work) {
+		Work.ThumbPath = path
 	}
 }
 
 // PosterPathOption ...
-func PosterPathOption(path string) WalkOptions {
-	return func(walk *Walk) {
-		walk.PosterPath = path
+func PosterPathOption(path string) WorkOptions {
+	return func(Work *Work) {
+		Work.PosterPath = path
 	}
 }
 
 // SamplePathOption ...
-func SamplePathOption(path []string) WalkOptions {
-	return func(walk *Walk) {
-		walk.SamplePath = path
+func SamplePathOption(path []string) WorkOptions {
+	return func(Work *Work) {
+		Work.SamplePath = path
 	}
 }
 
@@ -132,29 +132,29 @@ func dummy(src []byte) (IVideo, error) {
 }
 
 // Reset ...
-func (w *Walk) Reset() error {
-	w.WalkImpl.Status = WalkWaiting
+func (w *Work) Reset() error {
+	w.WorkImpl.Status = WorkWaiting
 	return w.Update()
 }
 
 // Status ...
-func (w *Walk) Status() WalkStatus {
-	return w.WalkImpl.Status
+func (w *Work) Status() WorkStatus {
+	return w.WorkImpl.Status
 }
 
 // Output ...
-func (w Walk) Output() string {
+func (w Work) Output() string {
 	if w.output == "" {
 		return "tmp"
 	}
 	return w.output
 }
 
-// Walk ...
-func (w Walk) Walk() Walk {
+// Work ...
+func (w Work) Work() Work {
 	return w
 }
-func (w Walk) slice(ctx context.Context, input string) (*Fragment, error) {
+func (w Work) slice(ctx context.Context, input string) (*Fragment, error) {
 	format, e := split.FFProbeStreamFormat(input)
 	if e != nil {
 		return nil, Wrap(e)
@@ -182,32 +182,32 @@ func (w Walk) slice(ctx context.Context, input string) (*Fragment, error) {
 	}, nil
 }
 
-func (w Walk) video() (IVideo, error) {
-	fn, b := WalkRunProcessFunction[w.WalkType]
+func (w Work) video() (IVideo, error) {
+	fn, b := WorkRunProcessFunction[w.WorkType]
 	if !b {
 		fn = dummy
 	}
 	return fn(w.Value)
 }
 
-// LoadWalk ...
-func LoadWalk(id string) (IWalk, error) {
+// LoadWork ...
+func LoadWork(id string) (IWork, error) {
 	bytes, e := cacher.Get(id)
 	if e != nil {
 		return nil, e
 	}
-	var w Walk
+	var w Work
 	e = json.Unmarshal(bytes, &w)
 	return &w, e
 }
 
 // ID ...
-func (w Walk) ID() string {
-	return w.WalkImpl.ID
+func (w Work) ID() string {
+	return w.WorkImpl.ID
 }
 
 // Store ...
-func (w *Walk) Store() error {
+func (w *Work) Store() error {
 	bytes, e := json.Marshal(w)
 	if e != nil {
 		return e
@@ -224,7 +224,7 @@ func (w *Walk) Store() error {
 }
 
 // Update ...
-func (w *Walk) Update() error {
+func (w *Work) Update() error {
 	bytes, e := json.Marshal(w)
 	if e != nil {
 		return e
@@ -241,8 +241,8 @@ func (w *Walk) Update() error {
 }
 
 // Run ...
-func (w *Walk) Run(ctx context.Context) (e error) {
-	w.WalkImpl.Status = WalkRunning
+func (w *Work) Run(ctx context.Context) (e error) {
+	w.WorkImpl.Status = WorkRunning
 	if err := w.Update(); err != nil {
 		return Wrap(err)
 	}
@@ -257,7 +257,7 @@ func (w *Walk) Run(ctx context.Context) (e error) {
 		video := v.Video()
 		video.TotalEpisode = strconv.Itoa(len(w.VideoPath))
 		video.Episode = strconv.Itoa(GetFileIndex(path))
-		if !SkipVerifyString("source", w.Skip...) {
+		if !ExistVerifyString("source", w.Skip...) {
 			s, e := AddFile(ctx, path)
 			if e != nil {
 				return Wrap(e)
@@ -265,7 +265,7 @@ func (w *Walk) Run(ctx context.Context) (e error) {
 			video.SourceHash = s
 		}
 
-		if !SkipVerifyString("slice", w.Skip...) {
+		if !ExistVerifyString("slice", w.Skip...) {
 			f, e := w.slice(ctx, path)
 			if e != nil {
 				return Wrap(e)
@@ -276,7 +276,7 @@ func (w *Walk) Run(ctx context.Context) (e error) {
 			}
 			video.M3U8Hash = s
 		}
-		if !SkipVerifyString("poster", w.Skip...) && w.PosterPath != "" {
+		if !ExistVerifyString("poster", w.Skip...) && w.PosterPath != "" {
 			s, e := AddFile(ctx, w.PosterPath)
 			if e != nil {
 				return Wrap(e)
@@ -284,7 +284,7 @@ func (w *Walk) Run(ctx context.Context) (e error) {
 			video.PosterHash = s
 		}
 
-		if !SkipVerifyString("thumb", w.Skip...) && w.PosterPath != "" {
+		if !ExistVerifyString("thumb", w.Skip...) && w.PosterPath != "" {
 			s, e := AddFile(ctx, w.ThumbPath)
 			if e != nil {
 				return Wrap(e)
@@ -301,7 +301,7 @@ func (w *Walk) Run(ctx context.Context) (e error) {
 		}
 	}
 
-	w.WalkImpl.Status = WalkFinish
+	w.WorkImpl.Status = WorkFinish
 	return Wrap(w.Update())
 }
 

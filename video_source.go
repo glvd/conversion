@@ -56,28 +56,28 @@ type VideoSource struct {
 	Uncensored   bool      `json:"uncensored"`    //有码,无码
 }
 
-// NewSourceWalk ...
-func NewSourceWalk(source *VideoSource, options ...WalkOptions) (IWalk, error) {
+// NewSourceWork ...
+func NewSourceWork(source *VideoSource, options ...WorkOptions) (IWork, error) {
 	bytes, e := json.Marshal(source)
 	if e != nil {
 		return nil, e
 	}
-	walk := &Walk{
+	Work := &Work{
 		VideoPath:  source.VideoPath,
 		PosterPath: source.PosterPath,
 		ThumbPath:  source.Thumb,
 		SamplePath: nil,
-		WalkImpl: WalkImpl{
+		WorkImpl: WorkImpl{
 			ID:       source.Bangumi,
-			WalkType: "source",
-			Status:   WalkWaiting,
+			WorkType: "source",
+			Status:   WorkWaiting,
 			Value:    bytes,
 		},
 	}
 	for _, opt := range options {
-		opt(walk)
+		opt(Work)
 	}
-	return walk, nil
+	return Work, nil
 }
 
 func decodeSource(src []byte) (IVideo, error) {
@@ -90,9 +90,9 @@ func decodeSource(src []byte) (IVideo, error) {
 }
 
 // VideoFromSource ...
-func VideoFromSource(walk *Walk) (IVideo, error) {
+func VideoFromSource(Work *Work) (IVideo, error) {
 	log.Info("source process run")
-	source, e := decodeSource(walk.Value)
+	source, e := decodeSource(Work.Value)
 	if e != nil {
 		return nil, e
 	}

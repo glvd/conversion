@@ -3,13 +3,14 @@ package conversion
 import (
 	"context"
 	"errors"
-	files "github.com/ipfs/go-ipfs-files"
-	"github.com/ipfs/interface-go-ipfs-core/options"
-	"github.com/ipfs/interface-go-ipfs-core/path"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	files "github.com/ipfs/go-ipfs-files"
+	"github.com/ipfs/interface-go-ipfs-core/options"
+	"github.com/ipfs/interface-go-ipfs-core/path"
 
 	"github.com/ipfs/go-ipfs-http-client"
 )
@@ -143,14 +144,17 @@ func PinCheck(ctx context.Context, hash ...string) (int, error) {
 	if e != nil {
 		return -1, e
 	}
+	var ps []string
+	var h string
+	for _, pin := range pins {
+		if h, e = ResolvedHash(pin.Path()); e != nil {
+			return 0, e
+		}
+		ps = append(ps, h)
+	}
+
 	for i, v := range hash {
-		for _, pin := range pins {
-			if hash, err := ResolvedHash(pin.Path()); err != nil {
-				return i, err
-				if hash == v {
-					break
-				}
-			}
+		if !ExistVerifyString(v, ps...) {
 			return i, nil
 		}
 	}

@@ -1,10 +1,11 @@
 package conversion
 
 import (
-	"github.com/glvd/split"
 	"path"
 	"path/filepath"
 	"strings"
+
+	"github.com/glvd/split"
 )
 
 // IsPicture ...
@@ -31,8 +32,8 @@ func IsMedia(format *split.StreamFormat) bool {
 	return true
 }
 
-// SkipVerifyString ...
-func SkipVerifyString(tp string, v ...string) bool {
+// ExistVerifyString ...
+func ExistVerifyString(tp string, v ...string) bool {
 	for i := range v {
 		if v[i] == tp {
 			return true
@@ -41,13 +42,11 @@ func SkipVerifyString(tp string, v ...string) bool {
 	return false
 }
 
-// SkipVerify ...
-func SkipVerify(tp string, v ...interface{}) bool {
+// ExistVerify ...
+func ExistVerifyFunc(tp string, f func(interface{}) string, v ...interface{}) bool {
 	for i := range v {
-		if v1, b := (v[i]).(string); b {
-			if v1 == tp {
-				return true
-			}
+		if f(v[i]) == tp {
+			return true
 		}
 	}
 	return false
