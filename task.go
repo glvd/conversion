@@ -127,6 +127,21 @@ func (t *Task) Restore() error {
 	return nil
 }
 
+// IsRunning ...
+func (t *Task) IsRunning(id string) (b bool) {
+	_, b = t.running.LoadOrStore(id, nil)
+	return
+	//if !b && {
+	//log.With("id", walk.ID()).Warn("reset status")
+	//e := walk.Reset()
+	//if e != nil {
+	//	log.With("id", walk.ID()).Error("reset:", e)
+	//}
+	//return fmt.Errorf("walk:%s is not running", walk.ID())
+	//}
+	//return IWalk, nil
+}
+
 // Start ...
 func (t *Task) Start() error {
 	if !CheckDatabase() || !CheckNode() {
@@ -149,19 +164,19 @@ func (t *Task) Start() error {
 					return
 				default:
 				}
+
 				if v := t.queue.Get(); v != nil {
 					if s, b := v.(string); b {
 						walk, e := LoadWalk(s)
 						if e != nil {
-							log.Error(e)
+							log.With("id", s).Error(e)
 							continue
 						}
-						_, b := t.running.LoadOrStore(walk.ID(), nil)
-						if !b && walk.Status() == WalkRunning {
-							log.With("id", walk.ID()).Warn("reset status")
+						if !t.IsRunning(walk.ID()) && walk.Status() == WalkRunning {
 							e := walk.Reset()
 							if e != nil {
-								log.With("id", walk.ID()).Error("reset:", e)
+								log.With("id", walk.ID()).Error(e)
+								continue
 							}
 						}
 						log.With("id", walk.ID()).Info("queue")
