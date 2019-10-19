@@ -162,41 +162,41 @@ func (t *Task) Start() error {
 
 				if v := t.queue.Get(); v != nil {
 					if s, b := v.(string); b {
-						Work, e := LoadWork(s)
+						work, e := LoadWork(s)
 						if e != nil {
-							log.With("id", s, "error", e).Error("load Work")
+							log.With("id", s, "error", e).Error("load work")
 							continue
 						}
-						if !t.Running(Work.ID()) && Work.Status() == WorkRunning {
-							e := Work.Reset()
+						if !t.Running(work.ID()) && work.Status() == WorkRunning {
+							e := work.Reset()
 							if e != nil {
-								log.With("id", Work.ID(), "error", e).Error("reset")
+								log.With("id", work.ID(), "error", e).Error("reset")
 								continue
 							}
 						}
-						switch Work.Status() {
+						switch work.Status() {
 						case WorkFinish:
-							log.With("id", Work.ID()).Warn("Work was finished")
+							log.With("id", work.ID()).Warn("work was finished")
 							continue
 						case WorkRunning:
-							log.With("id", Work.ID()).Warn("Work was running")
+							log.With("id", work.ID()).Warn("work was running")
 							continue
 						case WorkWaiting:
-							log.With("id", Work.ID()).Info("Work run")
-							e := DeleteTaskMessage(Work.ID())
+							log.With("id", work.ID()).Info("work run")
+							e := DeleteTaskMessage(work.ID())
 							if e != nil {
-								log.With("id", Work.ID(), "error", e).Error("before run")
+								log.With("id", work.ID(), "error", e).Error("before run")
 							}
-							e = Work.Run(t.context)
+							e = work.Run(t.context)
 							if e != nil {
-								log.With("id", Work.ID(), "error", e).Error("run")
+								log.With("id", work.ID(), "error", e).Error("run")
 							}
 						default:
-							log.With("id", Work.ID()).Panic("Work status wrong")
+							log.With("id", work.ID()).Panic("work status wrong")
 							continue
 						}
-						log.With("id", Work.ID()).Info("end run")
-						t.running.Delete(Work.ID())
+						log.With("id", work.ID()).Info("end run")
+						t.Finish(work.ID())
 					}
 					continue
 				}
