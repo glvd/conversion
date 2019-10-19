@@ -12,7 +12,7 @@ func TestTask_Start(t *testing.T) {
 	task := NewTask()
 	for i := 0; i < 5; i++ {
 		id := tool.GenerateRandomString(5)
-		v, e := NewSourceWork(&VideoSource{
+		v, e := NewSourceWork(&VideoPornSource{
 			VideoPath: []string{"D:\\video\\demo-r-24.mp4"},
 			Bangumi:   id,
 		})
@@ -24,7 +24,7 @@ func TestTask_Start(t *testing.T) {
 			t.Fatal(e)
 		}
 		id = tool.GenerateRandomString(2)
-		v1, e1 := NewInfoWork(&VideoInfo{
+		v1, e1 := NewInfoWork(&VideoPornInfo{
 			ID: id,
 		})
 		if e1 != nil {

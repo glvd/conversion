@@ -275,6 +275,7 @@ func (w *Work) Run(ctx context.Context) (e error) {
 				return Wrap(e)
 			}
 			video.M3U8Hash = s
+			AddHash(s)
 		}
 		if !ExistVerifyString("poster", w.skip...) && w.posterPath != "" {
 			s, e := AddFile(ctx, w.posterPath)

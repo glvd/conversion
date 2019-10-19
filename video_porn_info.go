@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 )
 
-// VideoInfo ...
-type VideoInfo struct {
+// VideoPornInfo ...
+type VideoPornInfo struct {
 	From          string    `json:"From"`          //来源
 	Uncensored    bool      `json:"Uncensored"`    //无码
 	ID            string    `json:"ID"`            //番号
@@ -47,7 +47,7 @@ type Sample struct {
 }
 
 // Video ...
-func (v VideoInfo) Video() *Video {
+func (v VideoPornInfo) Video() *Video {
 	var role []string
 	for _, act := range v.Actors {
 		role = append(role, act.Name)
@@ -93,7 +93,7 @@ func (v VideoInfo) Video() *Video {
 }
 
 // NewInfoWork ...
-func NewInfoWork(info *VideoInfo, options ...WorkOptions) (IWork, error) {
+func NewInfoWork(info *VideoPornInfo, options ...WorkOptions) (IWork, error) {
 	bytes, e := json.Marshal(info)
 	if e != nil {
 		return nil, e
@@ -112,7 +112,7 @@ func NewInfoWork(info *VideoInfo, options ...WorkOptions) (IWork, error) {
 	return Work, nil
 }
 func decodeInfo(src []byte) (IVideo, error) {
-	var info VideoInfo
+	var info VideoPornInfo
 	e := json.Unmarshal(src, &info)
 	if e != nil {
 		return nil, e
