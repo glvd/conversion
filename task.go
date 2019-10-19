@@ -131,15 +131,6 @@ func (t *Task) Restore() error {
 func (t *Task) IsRunning(id string) (b bool) {
 	_, b = t.running.LoadOrStore(id, nil)
 	return
-	//if !b && {
-	//log.With("id", Work.ID()).Warn("reset status")
-	//e := Work.Reset()
-	//if e != nil {
-	//	log.With("id", Work.ID()).Error("reset:", e)
-	//}
-	//return fmt.Errorf("Work:%s is not running", Work.ID())
-	//}
-	//return IWork, nil
 }
 
 // Start ...
