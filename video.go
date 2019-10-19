@@ -41,8 +41,6 @@ type Video struct {
 	Length       string   `xorm:"length" json:"length"`               //时长
 	Sample       []string `xorm:"json sample" json:"sample"`          //样板图
 	Uncensored   bool     `xorm:"uncensored" json:"uncensored"`       //有码,无码
-	//MagnetLinks  []string  `json:"-"`                              //磁链
-	//Visit        uint64    `json:"-" xorm:"notnull default(0)"`    //访问数
 }
 
 func init() {
