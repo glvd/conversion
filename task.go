@@ -127,8 +127,8 @@ func (t *Task) Restore() error {
 	return nil
 }
 
-// IsRunning ...
-func (t *Task) IsRunning(id string) (b bool) {
+// Running ...
+func (t *Task) Running(id string) (b bool) {
 	_, b = t.running.LoadOrStore(id, nil)
 	return
 }
@@ -163,7 +163,7 @@ func (t *Task) Start() error {
 							log.With("id", s, "error", e).Error("load Work")
 							continue
 						}
-						if !t.IsRunning(Work.ID()) && Work.Status() == WorkRunning {
+						if !t.Running(Work.ID()) && Work.Status() == WorkRunning {
 							e := Work.Reset()
 							if e != nil {
 								log.With("id", Work.ID(), "error", e).Error("reset")
