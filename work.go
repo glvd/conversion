@@ -31,22 +31,22 @@ type WorkStatus int
 
 // WorkImpl ...
 type WorkImpl struct {
-	ID       string
-	WorkType string
-	Status   WorkStatus
-	Value    []byte
+	ID         string
+	Status     WorkStatus
+	VideoPaths []string
+	PosterPath string
+	ThumbPath  string
+	SamplePath []string
+	Scale      Scale
+	Output     string
+	Skip       []string
 }
 
 // Work ...
 type Work struct {
-	WorkImpl
-	videoPaths []string
-	posterPath string
-	thumbPath  string
-	samplePath []string
-	scale      Scale
-	output     string
-	skip       []string
+	*WorkImpl
+	WorkType string
+	Value    []byte
 }
 
 // IWork ...
@@ -63,7 +63,7 @@ type IWork interface {
 type VideoProcessFunc func(src []byte) (IVideo, error)
 
 // WorkOptions ...
-type WorkOptions func(Work *Work)
+type WorkOptions func(impl *WorkImpl)
 
 // ErrWorkFinish ...
 var ErrWorkFinish = errors.New("Work was finished")
@@ -77,58 +77,82 @@ var WorkRunProcessFunction = map[string]VideoProcessFunc{
 	"info":   decodeInfo,
 }
 
+func IDOption(id string) WorkOptions {
+	return func(impl *WorkImpl) {
+		impl.ID = id
+	}
+}
+
 // SkipOption ...
 func SkipOption(skip ...string) WorkOptions {
-	return func(Work *Work) {
-		Work.skip = skip
+	return func(impl *WorkImpl) {
+		impl.Skip = skip
 	}
 }
 
 // ScaleOption ...
 func ScaleOption(scale Scale) WorkOptions {
-	return func(Work *Work) {
-		Work.scale = scale
+	return func(impl *WorkImpl) {
+		impl.Scale = scale
 	}
 }
 
 // OutputPathOption ...
 func OutputPathOption(path string) WorkOptions {
-	return func(Work *Work) {
-		Work.output = path
+	return func(impl *WorkImpl) {
+		impl.Output = path
 	}
 }
 
 // VideoPathOption ...
 func VideoPathOption(path []string) WorkOptions {
-	return func(Work *Work) {
-		Work.videoPaths = path
+	return func(impl *WorkImpl) {
+		impl.VideoPaths = path
 	}
 }
 
 // ThumbPathOption ...
 func ThumbPathOption(path string) WorkOptions {
-	return func(Work *Work) {
-		Work.thumbPath = path
+	return func(impl *WorkImpl) {
+		impl.ThumbPath = path
 	}
 }
 
 // PosterPathOption ...
 func PosterPathOption(path string) WorkOptions {
-	return func(Work *Work) {
-		Work.posterPath = path
+	return func(impl *WorkImpl) {
+		impl.PosterPath = path
 	}
 }
 
 // SamplePathOption ...
 func SamplePathOption(path []string) WorkOptions {
-	return func(Work *Work) {
-		Work.samplePath = path
+	return func(impl *WorkImpl) {
+		impl.SamplePath = path
 	}
 }
 
 func dummy(src []byte) (IVideo, error) {
 	log.With("src", string(src)).Panic("dummy")
 	return nil, nil
+}
+
+func defaultWork(options ...WorkOptions) *WorkImpl {
+	impl := &WorkImpl{
+		ID:         "",
+		Status:     0,
+		VideoPaths: nil,
+		PosterPath: "",
+		ThumbPath:  "",
+		SamplePath: nil,
+		Scale:      0,
+		Output:     os.TempDir(),
+		Skip:       nil,
+	}
+	for _, opt := range options {
+		opt(impl)
+	}
+	return impl
 }
 
 // Reset ...
@@ -142,18 +166,6 @@ func (w *Work) Status() WorkStatus {
 	return w.WorkImpl.Status
 }
 
-// Output ...
-func (w Work) Output() string {
-	if w.output == "" {
-		return "tmp"
-	}
-	return w.output
-}
-
-// Work ...
-func (w Work) Work() Work {
-	return w
-}
 func (w Work) slice(ctx context.Context, input string) (*Fragment, error) {
 	format, e := split.FFProbeStreamFormat(input)
 	if e != nil {
@@ -163,20 +175,20 @@ func (w Work) slice(ctx context.Context, input string) (*Fragment, error) {
 		return nil, errors.New("file is not a video/audio")
 	}
 	res := parseScale(int64(format.ResolutionInt()))
-	if res < w.scale {
-		w.scale = res
+	if res < w.Scale {
+		w.Scale = res
 	}
-	sharpness := strconv.FormatInt(formatScale(w.scale), 10) + "P"
+	sharpness := strconv.FormatInt(formatScale(w.Scale), 10) + "P"
 
-	//output := filepath.Join(w.Output, UUID().String())
-	sa, e := split.FFMpegSplitToM3U8(ctx, input, split.StreamFormatOption(format), split.ScaleOption(formatScale(w.scale)), split.OutputOption(w.Output()), split.AutoOption(true))
+	//Output := filepath.Join(w.Output, UUID().String())
+	sa, e := split.FFMpegSplitToM3U8(ctx, input, split.StreamFormatOption(format), split.ScaleOption(formatScale(w.Scale)), split.OutputOption(w.Output()), split.AutoOption(true))
 	if e != nil {
 		return nil, Wrap(e)
 	}
 	return &Fragment{
-		scale:     w.scale,
+		scale:     w.Scale,
 		output:    sa.Output,
-		skip:      w.skip,
+		skip:      w.Skip,
 		input:     input,
 		sharpness: sharpness,
 	}, nil
@@ -204,6 +216,10 @@ func LoadWork(id string) (IWork, error) {
 // ID ...
 func (w Work) ID() string {
 	return w.WorkImpl.ID
+}
+
+func (w Work) Output() string {
+	return w.WorkImpl.Output
 }
 
 // Store ...
@@ -250,14 +266,14 @@ func (w *Work) Run(ctx context.Context) (e error) {
 	if e != nil {
 		return Wrap(e)
 	}
-	for _, path := range w.videoPaths {
+	for _, path := range w.VideoPaths {
 		if path == "" {
 			continue
 		}
 		video := v.Video()
-		video.TotalEpisode = strconv.Itoa(len(w.videoPaths))
+		video.TotalEpisode = strconv.Itoa(len(w.VideoPaths))
 		video.Episode = strconv.Itoa(GetFileIndex(path))
-		if !ExistVerifyString("source", w.skip...) {
+		if !ExistVerifyString("source", w.Skip...) {
 			s, e := AddFile(ctx, path)
 			if e != nil {
 				return Wrap(e)
@@ -265,7 +281,7 @@ func (w *Work) Run(ctx context.Context) (e error) {
 			video.SourceHash = s
 		}
 
-		if !ExistVerifyString("slice", w.skip...) {
+		if !ExistVerifyString("slice", w.Skip...) {
 			f, e := w.slice(ctx, path)
 			if e != nil {
 				return Wrap(e)
@@ -275,18 +291,18 @@ func (w *Work) Run(ctx context.Context) (e error) {
 				return Wrap(e)
 			}
 			video.M3U8Hash = s
-			AddHash(s)
+			//AddHash(s)
 		}
-		if !ExistVerifyString("poster", w.skip...) && w.posterPath != "" {
-			s, e := AddFile(ctx, w.posterPath)
+		if !ExistVerifyString("poster", w.Skip...) && w.PosterPath != "" {
+			s, e := AddFile(ctx, w.PosterPath)
 			if e != nil {
 				return Wrap(e)
 			}
 			video.PosterHash = s
 		}
 
-		if !ExistVerifyString("thumb", w.skip...) && w.posterPath != "" {
-			s, e := AddFile(ctx, w.thumbPath)
+		if !ExistVerifyString("thumb", w.Skip...) && w.PosterPath != "" {
+			s, e := AddFile(ctx, w.ThumbPath)
 			if e != nil {
 				return Wrap(e)
 			}

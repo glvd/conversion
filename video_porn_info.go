@@ -98,16 +98,12 @@ func NewInfoWork(info *VideoPornInfo, options ...WorkOptions) (IWork, error) {
 	if e != nil {
 		return nil, e
 	}
+
+	options = append(options, IDOption(info.ID))
 	Work := &Work{
-		WorkImpl: WorkImpl{
-			ID:       info.ID,
-			WorkType: "info",
-			Status:   WorkWaiting,
-			Value:    bytes,
-		},
-	}
-	for _, opt := range options {
-		opt(Work)
+		WorkImpl: defaultWork(options...),
+		WorkType: "info",
+		Value:    bytes,
 	}
 	return Work, nil
 }

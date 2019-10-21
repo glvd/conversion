@@ -43,20 +43,16 @@ func NewSourceWork(source *VideoPornSource, options ...WorkOptions) (IWork, erro
 	if e != nil {
 		return nil, e
 	}
+	opts := []WorkOptions{IDOption(source.Bangumi),
+		VideoPathOption(source.VideoPath),
+		PosterPathOption(source.PosterPath),
+		ThumbPathOption(source.Thumb)}
+	opts = append(opts, options...)
+
 	Work := &Work{
-		videoPaths: source.VideoPath,
-		posterPath: source.PosterPath,
-		thumbPath:  source.Thumb,
-		samplePath: nil,
-		WorkImpl: WorkImpl{
-			ID:       source.Bangumi,
-			WorkType: "source",
-			Status:   WorkWaiting,
-			Value:    bytes,
-		},
-	}
-	for _, opt := range options {
-		opt(Work)
+		WorkImpl: defaultWork(opts...),
+		WorkType: "source",
+		Value:    bytes,
 	}
 	return Work, nil
 }
@@ -107,36 +103,36 @@ func (v VideoPornSource) Video() *Video {
 	}
 
 	return &Video{
-		Model:        Model{},
-		BanNo:        strings.ToUpper(v.Bangumi),
-		Intro:        intro,
-		Alias:        v.Alias,
-		ThumbHash:    "",
-		PosterHash:   "",
-		SourceHash:   "",
-		M3U8Hash:     "",
-		Key:          "",
-		M3U8:         "",
-		Role:         v.Role,
-		Director:     v.Director,
-		Systematics:  v.Systematics,
-		Season:       MustString(v.Season, "1"),
-		Episode:      MustString(v.Episode, "1"),
-		TotalEpisode: MustString(v.TotalEpisode, "1"),
-		Format:       MustString(v.Format, "2D"),
-		Producer:     v.Producer,
-		Publisher:    v.Publisher,
-		Type:         v.Type,
-		Language:     v.Language,
-		Caption:      v.Caption,
-		Group:        "",
-		Index:        "",
-		Date:         v.Date,
-		Sharpness:    v.Sharpness,
-		Series:       v.Series,
-		Tags:         v.Tags,
-		Length:       v.Length,
-		Sample:       nil,
-		Uncensored:   false,
+		Model:      Model{},
+		BanNo:      strings.ToUpper(v.Bangumi),
+		Intro:      intro,
+		Alias:      v.Alias,
+		ThumbHash:  "",
+		PosterHash: "",
+		SourceHash: "",
+		M3U8Hash:   "",
+		Key:        "",
+		M3U8:       "",
+		Role:       v.Role,
+		Director:   v.Director,
+		////Systematics:  v.Systematics,
+		//Season:       MustString(v.Season, "1"),
+		//Episode:      MustString(v.Episode, "1"),
+		//TotalEpisode: MustString(v.TotalEpisode, "1"),
+		Format:    MustString(v.Format, "2D"),
+		Producer:  v.Producer,
+		Publisher: v.Publisher,
+		//Type:         v.Type,
+		Language: v.Language,
+		Caption:  v.Caption,
+		Group:    "",
+		Index:    "",
+		Date:     v.Date,
+		//Sharpness:    v.Sharpness,
+		Series:     v.Series,
+		Tags:       v.Tags,
+		Length:     v.Length,
+		Sample:     nil,
+		Uncensored: false,
 	}
 }
