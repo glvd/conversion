@@ -175,12 +175,6 @@ func (t *Task) Start() error {
 							}
 						}
 						switch work.Status() {
-						case WorkFinish:
-							log.With("id", work.ID()).Warn("work was finished")
-							continue
-						case WorkRunning:
-							log.With("id", work.ID()).Warn("work was running")
-							continue
 						case WorkWaiting:
 							log.With("id", work.ID()).Info("work run")
 							e := DeleteTaskMessage(work.ID())
@@ -191,6 +185,15 @@ func (t *Task) Start() error {
 							if e != nil {
 								log.With("id", work.ID(), "error", e).Error("run")
 							}
+						case WorkStopped:
+							log.With("id", work.ID()).Info("work was stopped")
+							continue
+						case WorkRunning:
+							log.With("id", work.ID()).Warn("work was running")
+							continue
+						case WorkFinish:
+							log.With("id", work.ID()).Warn("work was finished")
+							continue
 						default:
 							log.With("id", work.ID()).Panic("work status wrong")
 							continue
