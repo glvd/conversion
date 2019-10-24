@@ -44,6 +44,8 @@ type WorkImpl struct {
 
 // Work ...
 type Work struct {
+	ctx    context.Context
+	cancel context.CancelFunc
 	*WorkImpl
 	WorkType string
 	Value    []byte
@@ -256,8 +258,25 @@ func (w *Work) Update() error {
 	return cacher.Set(w.ID(), bytes)
 }
 
+func (w *Work) Stop() error {
+	if w.cancel != nil {
+		w.cancel()
+	}
+	return errors.New("cancel is nil")
+}
+
+func (w Work) CheckStop(f func() error) error {
+	select {
+	case <-w.ctx.Done():
+		return w.ctx.Err()
+	default:
+		return f()
+	}
+}
+
 // Run ...
 func (w *Work) Run(ctx context.Context) (e error) {
+	w.ctx, w.cancel = context.WithCancel(ctx)
 	w.WorkImpl.Status = WorkRunning
 	if err := w.Update(); err != nil {
 		return Wrap(err)
@@ -270,43 +289,64 @@ func (w *Work) Run(ctx context.Context) (e error) {
 		if path == "" {
 			continue
 		}
+
 		video := v.Video()
 		video.TotalEpisode = strconv.Itoa(len(w.VideoPaths))
 		video.Episode = strconv.Itoa(GetFileIndex(path))
-		if !ExistVerifyString("source", w.Skip...) {
-			s, e := AddFile(ctx, path)
-			if e != nil {
-				return Wrap(e)
+		if err := w.CheckStop(func() error {
+			if !ExistVerifyString("source", w.Skip...) {
+				s, e := AddFile(ctx, path)
+				if e != nil {
+					return Wrap(e)
+				}
+				video.SourceHash = s
 			}
-			video.SourceHash = s
+			return nil
+		}); err != nil {
+			return err
 		}
 
-		if !ExistVerifyString("slice", w.Skip...) {
-			f, e := w.slice(ctx, path)
-			if e != nil {
-				return Wrap(e)
+		if err := w.CheckStop(func() error {
+			if !ExistVerifyString("slice", w.Skip...) {
+				f, e := w.slice(ctx, path)
+				if e != nil {
+					return Wrap(e)
+				}
+				s, e := AddDir(ctx, f.Output())
+				if e != nil {
+					return Wrap(e)
+				}
+				video.M3U8Hash = s
+				//AddHash(s)
 			}
-			s, e := AddDir(ctx, f.Output())
-			if e != nil {
-				return Wrap(e)
-			}
-			video.M3U8Hash = s
-			//AddHash(s)
-		}
-		if !ExistVerifyString("poster", w.Skip...) && w.PosterPath != "" {
-			s, e := AddFile(ctx, w.PosterPath)
-			if e != nil {
-				return Wrap(e)
-			}
-			video.PosterHash = s
+			return nil
+		}); err != nil {
+			return err
 		}
 
-		if !ExistVerifyString("thumb", w.Skip...) && w.PosterPath != "" {
-			s, e := AddFile(ctx, w.ThumbPath)
-			if e != nil {
-				return Wrap(e)
+		if err := w.CheckStop(func() error {
+			if !ExistVerifyString("poster", w.Skip...) && w.PosterPath != "" {
+				s, e := AddFile(ctx, w.PosterPath)
+				if e != nil {
+					return Wrap(e)
+				}
+				video.PosterHash = s
 			}
-			video.ThumbHash = s
+			return nil
+		}); err != nil {
+			return err
+		}
+		if err := w.CheckStop(func() error {
+			if !ExistVerifyString("thumb", w.Skip...) && w.PosterPath != "" {
+				s, e := AddFile(ctx, w.ThumbPath)
+				if e != nil {
+					return Wrap(e)
+				}
+				video.ThumbHash = s
+			}
+			return nil
+		}); err != nil {
+			return err
 		}
 
 		i, e := InsertOrUpdate(video)
