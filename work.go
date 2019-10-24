@@ -16,10 +16,10 @@ import (
 	"github.com/gocacher/cacher"
 )
 
-// WorkRunning ...
 const (
 	WorkWaiting WorkStatus = iota + 1
 	WorkRunning
+	WorkStopped
 	WorkFinish
 )
 
