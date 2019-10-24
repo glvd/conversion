@@ -260,6 +260,11 @@ func (w *Work) Update() error {
 
 func (w *Work) Stop() error {
 	if w.cancel != nil {
+		w.WorkImpl.Status = WorkStopped
+		e := w.Update()
+		if e != nil {
+			return e
+		}
 		w.cancel()
 	}
 	return errors.New("cancel is nil")
