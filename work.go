@@ -277,6 +277,7 @@ func (w Work) CheckStop(f func() error) error {
 // Run ...
 func (w *Work) Run(ctx context.Context) (e error) {
 	w.ctx, w.cancel = context.WithCancel(ctx)
+	defer w.cancel()
 	w.WorkImpl.Status = WorkRunning
 	if err := w.Update(); err != nil {
 		return Wrap(err)
