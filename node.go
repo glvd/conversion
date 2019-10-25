@@ -41,14 +41,15 @@ func init() {
 // MyID ...
 func MyID() *PeerID {
 	if _myID == nil {
-		_myID = &PeerID{}
+		pid := &PeerID{}
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
-		e := _cli.Request("id").Exec(ctx, _myID)
+		e := _cli.Request("id").Exec(ctx, pid)
 		if e != nil {
 			log.Error(e)
 			return nil
 		}
+		_myID = pid
 	}
 	return _myID
 }
