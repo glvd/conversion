@@ -129,9 +129,11 @@ func InitMySQL(ops ...ConfigOptions) (*xorm.Engine, error) {
 	}
 	defer dbEngine.Close()
 	sql := fmt.Sprintf(createDatabase, config.schema)
-	dbEngine.ShowSQL(true)
-	_, _ = dbEngine.DB().Exec(sql)
 
+	_, e = dbEngine.DB().Exec(sql)
+	if e == nil {
+		log.Infow("create database", "database", config.schema)
+	}
 	engine, e := xorm.NewEngine(config.dbType, config.source())
 	if e != nil {
 		return nil, e
