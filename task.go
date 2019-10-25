@@ -133,6 +133,7 @@ func (t *Task) Running(id string) (b bool) {
 	return
 }
 
+// Finish ...
 func (t *Task) Finish(id string) {
 	t.running.Delete(id)
 }

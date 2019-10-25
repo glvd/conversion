@@ -13,6 +13,7 @@ import (
 )
 
 const mysqlStatement = "%s:%s@tcp(%s)/%s?loc=%s&charset=%s&parseTime=true"
+const createDatabase = "CREATE DATABASE `%s` CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_bin'"
 
 // Model ...
 type model struct {
@@ -122,11 +123,19 @@ func InitMySQL(ops ...ConfigOptions) (*xorm.Engine, error) {
 	for _, op := range ops {
 		op(config)
 	}
+	dbEngine, e := xorm.NewEngine(config.dbType, config.dbSource())
+	if e != nil {
+		return nil, e
+	}
+	defer dbEngine.Close()
+	sql := fmt.Sprintf(createDatabase, config.schema)
+	_, _ = dbEngine.DB().Exec(sql)
 
 	engine, e := xorm.NewEngine(config.dbType, config.source())
 	if e != nil {
 		return nil, e
 	}
+
 	return engine, nil
 }
 
@@ -134,6 +143,11 @@ func InitMySQL(ops ...ConfigOptions) (*xorm.Engine, error) {
 func (d *dbConfig) source() string {
 	return fmt.Sprintf(mysqlStatement,
 		d.username, d.password, d.addr, d.schema, d.location, d.charset)
+}
+
+func (d *dbConfig) dbSource() string {
+	return fmt.Sprintf(mysqlStatement,
+		d.username, d.password, d.addr, "", d.location, d.charset)
 }
 
 // ID ...

@@ -16,6 +16,7 @@ import (
 	"github.com/gocacher/cacher"
 )
 
+// WorkWaiting ...
 const (
 	WorkWaiting WorkStatus = iota + 1
 	WorkRunning
@@ -79,6 +80,7 @@ var WorkRunProcessFunction = map[string]VideoProcessFunc{
 	"info":   decodeInfo,
 }
 
+// IDOption ...
 func IDOption(id string) WorkOptions {
 	return func(impl *WorkImpl) {
 		impl.ID = id
@@ -220,6 +222,7 @@ func (w Work) ID() string {
 	return w.WorkImpl.ID
 }
 
+// Output ...
 func (w Work) Output() string {
 	return w.WorkImpl.Output
 }
@@ -258,6 +261,7 @@ func (w *Work) Update() error {
 	return cacher.Set(w.ID(), bytes)
 }
 
+// Stop ...
 func (w *Work) Stop() error {
 	if w.cancel != nil {
 		w.WorkImpl.Status = WorkStopped
@@ -270,6 +274,7 @@ func (w *Work) Stop() error {
 	return errors.New("cancel is nil")
 }
 
+// CheckStop ...
 func (w Work) CheckStop(f func() error) error {
 	select {
 	case <-w.ctx.Done():
