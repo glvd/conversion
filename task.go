@@ -133,15 +133,20 @@ func (t *Task) Running(id string) (b bool) {
 	return
 }
 
+// Finish ...
 func (t *Task) Finish(id string) {
 	t.running.Delete(id)
 }
 
 // Start ...
 func (t *Task) Start() error {
-	if !CheckDatabase() || !CheckNode() {
-		return errors.New("service was not ready")
+	if !CheckDatabase() {
+		return errors.New("sql service was not ready")
 	}
+	if !CheckNode() {
+		return errors.New("node service was not ready")
+	}
+
 	if err := t.Restore(); err != nil {
 		return Wrap(err)
 	}
@@ -219,7 +224,6 @@ func (t *Task) Start() error {
 // NewTask ...
 func NewTask() *Task {
 	ctx, cancel := context.WithCancel(context.Background())
-
 	return &Task{
 		context:  ctx,
 		cancel:   cancel,

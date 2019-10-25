@@ -3,14 +3,15 @@ package conversion
 import (
 	"context"
 	"errors"
+	"io/ioutil"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
 	files "github.com/ipfs/go-ipfs-files"
 	"github.com/ipfs/interface-go-ipfs-core/options"
 	"github.com/ipfs/interface-go-ipfs-core/path"
+	"github.com/multiformats/go-multiaddr"
 
 	"github.com/ipfs/go-ipfs-http-client"
 )
@@ -24,47 +25,62 @@ type PeerID struct {
 	PublicKey       string   `json:"PublicKey"`
 }
 
-var _node string
+// DefaultNode ...
+var DefaultNode = "/ip4/127.0.0.1/tcp/5001"
 var _cli *httpapi.HttpApi
 var _myID *PeerID
 
 func init() {
-	_node = os.Getenv("IPFS_PATH")
+	bytes, e := ioutil.ReadFile(os.Getenv("IPFS_PATH"))
+	if e != nil {
+		return
+	}
+	DefaultNode = strings.TrimSpace(string(bytes))
 }
 
 // MyID ...
 func MyID() *PeerID {
 	if _myID == nil {
-		_myID = &PeerID{}
+		pid := &PeerID{}
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
-		e := _cli.Request("id").Exec(ctx, _myID)
+		e := _cli.Request("id").Exec(ctx, pid)
 		if e != nil {
 			log.Error(e)
 			return nil
 		}
+		_myID = pid
 	}
 	return _myID
 }
 
 // SetNodePath ...
 func SetNodePath(path string) {
-	_node = path
+	bytes, e := ioutil.ReadFile(path)
+	if e != nil {
+		return
+	}
+	DefaultNode = strings.TrimSpace(string(bytes))
+}
+
+// SetNodeAddress ...
+func SetNodeAddress(addr string) {
+	DefaultNode = addr
 }
 
 // ConnectToNode ...
 func ConnectToNode() (e error) {
-	_cli, e = httpapi.NewPathApi(_node)
+	ma, err := multiaddr.NewMultiaddr(DefaultNode)
+	if err != nil {
+		return err
+	}
+	_cli, e = httpapi.NewApi(ma)
 	return
 }
 
 // CheckNode ...
 func CheckNode() bool {
-	info, e := os.Stat(filepath.Join(_node, "api"))
-	if e != nil || info.IsDir() {
-		return false
-	}
-	return true
+	return MyID() != nil
 }
 
 // ResolvedHash ...
