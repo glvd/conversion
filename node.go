@@ -80,7 +80,7 @@ func ConnectToNode() (e error) {
 
 // CheckNode ...
 func CheckNode() bool {
-	return MyID() == nil
+	return MyID() != nil
 }
 
 // ResolvedHash ...
