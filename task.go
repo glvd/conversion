@@ -220,7 +220,6 @@ func (t *Task) Start() error {
 // NewTask ...
 func NewTask() *Task {
 	ctx, cancel := context.WithCancel(context.Background())
-
 	return &Task{
 		context:  ctx,
 		cancel:   cancel,
