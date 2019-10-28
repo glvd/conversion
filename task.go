@@ -240,6 +240,20 @@ func (t *Task) GetWork(id string) (IWork, error) {
 	return LoadWork(id)
 }
 
+// AllRun ...
+func (t *Task) AllRun() (works []IWork, e error) {
+	t.running.Range(func(key, value interface{}) bool {
+		iwork, err := LoadWork(key.(string))
+		if err != nil {
+			e = err
+			return false
+		}
+		works = append(works, iwork)
+		return true
+	})
+	return
+}
+
 // NewTask ...
 func NewTask() *Task {
 	ctx, cancel := context.WithCancel(context.Background())
