@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -219,6 +220,27 @@ func (t *Task) Start() error {
 	wg.Wait()
 	log.Info("end")
 	return nil
+}
+
+// GetWorkStatus ...
+func (t *Task) GetWorkStatus(id string) (WorkStatus, error) {
+	work, e := LoadWork(id)
+	if e != nil {
+		return WorkAbnormal, fmt.Errorf("get status:%w", e)
+	}
+	_, ok := t.running.Load(work.ID())
+	if !ok && work.Status() == WorkRunning {
+		return WorkWaiting, nil
+	}
+	return work.Status(), nil
+}
+
+// GetWork ...
+func (t *Task) GetWork(id string) (IWork, error) {
+	work, e := LoadWork(id)
+	if e != nil {
+	}
+
 }
 
 // NewTask ...

@@ -18,7 +18,8 @@ import (
 
 // WorkWaiting ...
 const (
-	WorkWaiting WorkStatus = iota + 1
+	WorkAbnormal WorkStatus = iota
+	WorkWaiting
 	WorkRunning
 	WorkStopped
 	WorkFinish
@@ -55,6 +56,7 @@ type Work struct {
 // IWork ...
 type IWork interface {
 	ID() string
+	Info() string
 	Update() error
 	Store() error
 	Reset() error
@@ -409,6 +411,11 @@ func GetFiles(name string, regex string) (files []string) {
 		files = append(files, fullPath)
 	}
 	return files
+}
+
+// Info ...
+func (w *Work) Info() []byte {
+	return w.Value
 }
 
 // GetFileIndex ...
