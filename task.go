@@ -129,8 +129,8 @@ func (t *Task) Restore() error {
 }
 
 // Running ...
-func (t *Task) Running(id string) (b bool) {
-	_, b = t.running.LoadOrStore(id, nil)
+func (t *Task) Running(work IWork) (b bool) {
+	_, b = t.running.LoadOrStore(work.ID(), work)
 	return
 }
 
@@ -173,7 +173,7 @@ func (t *Task) Start() error {
 							log.With("id", s, "error", e).Error("load work")
 							continue
 						}
-						if !t.Running(work.ID()) && work.Status() == WorkRunning {
+						if !t.Running(work) && work.Status() == WorkRunning {
 							e := work.Reset()
 							if e != nil {
 								log.With("id", work.ID(), "error", e).Error("reset")
@@ -238,6 +238,17 @@ func (t *Task) GetWorkStatus(id string) (WorkStatus, error) {
 // GetWork ...
 func (t *Task) GetWork(id string) (IWork, error) {
 	return LoadWork(id)
+}
+
+// StopWork ...
+func (t *Task) StopWork(id string) {
+	if value, ok := t.running.Load(id); ok {
+		if work, b := value.(IWork); b {
+			if err := work.Stop(); err != nil {
+				return
+			}
+		}
+	}
 }
 
 // AllRun ...

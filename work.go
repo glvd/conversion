@@ -64,6 +64,7 @@ type IWork interface {
 	Reset() error
 	Status() WorkStatus
 	Run(ctx context.Context) (e error)
+	Stop() error
 }
 
 // VideoProcessFunc ...
