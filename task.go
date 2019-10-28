@@ -116,8 +116,8 @@ func (t *Task) Stop() {
 	}
 }
 
-// Restore ...
-func (t *Task) Restore() error {
+// restore ...
+func (t *Task) restore() error {
 	ss, e := LoadTaskMessage()
 	if e != nil {
 		return Wrap(e)
@@ -148,7 +148,7 @@ func (t *Task) Start() error {
 		return errors.New("node service was not ready")
 	}
 
-	if err := t.Restore(); err != nil {
+	if err := t.restore(); err != nil {
 		return Wrap(err)
 	}
 
@@ -240,6 +240,21 @@ func (t *Task) GetWork(id string) (IWork, error) {
 	return LoadWork(id)
 }
 
+// StartWork ...
+func (t *Task) StartWork(id string) error {
+	iwork, e := LoadWork(id)
+	if e != nil {
+		return Wrap(e)
+	}
+	if err := iwork.Reset(); err != nil {
+		return Wrap(err)
+	}
+	if err := t.AddWorker(iwork); err != nil {
+		return Wrap(err)
+	}
+	return nil
+}
+
 // StopWork ...
 func (t *Task) StopWork(id string) {
 	if value, ok := t.running.Load(id); ok {
@@ -256,7 +271,7 @@ func (t *Task) AllRun() (works []IWork, e error) {
 	t.running.Range(func(key, value interface{}) bool {
 		iwork, err := LoadWork(key.(string))
 		if err != nil {
-			e = err
+			e = Wrap(err)
 			return false
 		}
 		works = append(works, iwork)
