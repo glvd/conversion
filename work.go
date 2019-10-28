@@ -56,6 +56,8 @@ type Work struct {
 // IWork ...
 type IWork interface {
 	ID() string
+	Work() *Work
+	Video() *Video
 	Info() string
 	Update() error
 	Store() error
@@ -413,9 +415,26 @@ func GetFiles(name string, regex string) (files []string) {
 	return files
 }
 
+// Work ...
+func (w *Work) Work() *Work {
+	wc := *w
+	wc.Value = make([]byte, len(w.Value))
+	copy(wc.Value, w.Value)
+	return &wc
+}
+
+// Video ...
+func (w *Work) Video() *Video {
+	v, err := w.video()
+	if err != nil {
+		return nil
+	}
+	return v.Video()
+}
+
 // Info ...
-func (w *Work) Info() []byte {
-	return w.Value
+func (w *Work) Info() string {
+	return string(w.Value)
 }
 
 // GetFileIndex ...

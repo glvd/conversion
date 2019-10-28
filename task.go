@@ -237,10 +237,7 @@ func (t *Task) GetWorkStatus(id string) (WorkStatus, error) {
 
 // GetWork ...
 func (t *Task) GetWork(id string) (IWork, error) {
-	work, e := LoadWork(id)
-	if e != nil {
-	}
-
+	return LoadWork(id)
 }
 
 // NewTask ...
