@@ -100,12 +100,17 @@ func NewInfoWork(info *VideoPornInfo, options ...WorkOptions) (IWork, error) {
 	}
 
 	options = append(options, IDOption(info.ID))
-	Work := &Work{
+	work := &Work{
 		WorkImpl: defaultWork(options...),
 		WorkType: "info",
 		Value:    bytes,
 	}
-	return Work, nil
+
+	if work.ID() == "" {
+		return nil, ErrWorkID
+	}
+
+	return work, nil
 }
 func decodeInfo(src []byte) (IVideo, error) {
 	var info VideoPornInfo

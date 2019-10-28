@@ -69,7 +69,10 @@ type VideoProcessFunc func(src []byte) (IVideo, error)
 type WorkOptions func(impl *WorkImpl)
 
 // ErrWorkFinish ...
-var ErrWorkFinish = errors.New("Work was finished")
+var ErrWorkFinish = errors.New("work was finished")
+
+// ErrWorkID ...
+var ErrWorkID = errors.New("video id must input")
 
 // ErrWrongCastType ...
 var ErrWrongCastType = errors.New("something wrong when cast to type")
