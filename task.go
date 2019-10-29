@@ -183,10 +183,7 @@ func (t *Task) Start() error {
 						switch work.Status() {
 						case WorkWaiting:
 							log.With("id", work.ID()).Info("work run")
-							e := DeleteTaskMessage(work.ID())
-							if e != nil {
-								log.With("id", work.ID(), "error", e).Error("before run")
-							}
+
 							e = work.Run(t.context)
 							if e != nil {
 								log.With("id", work.ID(), "error", e).Error("run")
@@ -209,6 +206,10 @@ func (t *Task) Start() error {
 							}
 						}
 						log.With("id", work.ID()).Info("end run")
+						e = DeleteTaskMessage(work.ID())
+						if e != nil {
+							log.With("id", work.ID(), "error", e).Error("before run")
+						}
 						t.Finish(work.ID())
 					}
 					continue
