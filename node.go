@@ -16,6 +16,19 @@ import (
 	"github.com/ipfs/go-ipfs-http-client"
 )
 
+// ModeTypeCluster ...
+const (
+	ModeTypeCluster = "cluster"
+	ModeTypeSingle  = "single"
+)
+
+// Node ...
+type Node struct {
+	ModeType string
+	client   *httpapi.HttpApi
+	ID       *PeerID
+}
+
 // PeerID ...
 type PeerID struct {
 	Addresses       []string `json:"Addresses"`
@@ -27,8 +40,7 @@ type PeerID struct {
 
 // DefaultNode ...
 var DefaultNode = "/ip4/127.0.0.1/tcp/5001"
-var _cli *httpapi.HttpApi
-var _myID *PeerID
+var _node *Node
 
 func init() {
 	bytes, e := ioutil.ReadFile(os.Getenv("IPFS_PATH"))
@@ -39,19 +51,19 @@ func init() {
 }
 
 // MyID ...
-func MyID() *PeerID {
-	if _myID == nil {
+func (n *Node) MyID() *PeerID {
+	if n.ID == nil {
 		pid := &PeerID{}
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
-		e := _cli.Request("id").Exec(ctx, pid)
+		e := n.client.Request("id").Exec(ctx, pid)
 		if e != nil {
 			log.Error(e)
 			return nil
 		}
-		_myID = pid
+		n.ID = pid
 	}
-	return _myID
+	return n.ID
 }
 
 // SetNodePath ...
@@ -68,19 +80,19 @@ func SetNodeAddress(addr string) {
 	DefaultNode = addr
 }
 
-// ConnectToNode ...
-func ConnectToNode() (e error) {
+// connectToNode ...
+func connectToNode() (e error) {
 	ma, err := multiaddr.NewMultiaddr(DefaultNode)
 	if err != nil {
 		return err
 	}
-	_cli, e = httpapi.NewApi(ma)
+	_node.client, e = httpapi.NewApi(ma)
 	return
 }
 
 // CheckNode ...
 func CheckNode() bool {
-	return MyID() != nil
+	return _node != nil
 }
 
 // ResolvedHash ...
@@ -98,7 +110,7 @@ func AddFile(ctx context.Context, filename string) (string, error) {
 	if e != nil {
 		return "", e
 	}
-	resolved, e := _cli.Unixfs().Add(ctx, files.NewReaderFile(file),
+	resolved, e := _node.client.Unixfs().Add(ctx, files.NewReaderFile(file),
 		func(settings *options.UnixfsAddSettings) error {
 			settings.Pin = true
 			return nil
@@ -123,7 +135,7 @@ func AddDir(ctx context.Context, dir string) (string, error) {
 	//不加目录
 	//slf := files.NewSliceDirectory([]files.DirEntry{files.FileEntry(filepath.Base(dir), sf)})
 	//reader := files.NewMultiFileReader(slf, true)
-	resolved, e := _cli.Unixfs().Add(ctx, sf,
+	resolved, e := _node.client.Unixfs().Add(ctx, sf,
 		func(settings *options.UnixfsAddSettings) error {
 			settings.Pin = true
 			return nil
@@ -137,7 +149,7 @@ func AddDir(ctx context.Context, dir string) (string, error) {
 
 // PinHash ...
 func PinHash(ctx context.Context, hash string) error {
-	return _cli.Pin().Add(ctx, path.New(hash), func(settings *options.PinAddSettings) error {
+	return _node.client.Pin().Add(ctx, path.New(hash), func(settings *options.PinAddSettings) error {
 		settings.Recursive = true
 		return nil
 	})
@@ -145,7 +157,7 @@ func PinHash(ctx context.Context, hash string) error {
 
 // UnpinHash ...
 func UnpinHash(ctx context.Context, hash string) error {
-	return _cli.Pin().Rm(ctx, path.New(hash), func(settings *options.PinRmSettings) error {
+	return _node.client.Pin().Rm(ctx, path.New(hash), func(settings *options.PinRmSettings) error {
 		settings.Recursive = true
 		return nil
 	})
@@ -153,7 +165,7 @@ func UnpinHash(ctx context.Context, hash string) error {
 
 // PinCheck ...
 func PinCheck(ctx context.Context, hash ...string) (int, error) {
-	pins, e := _cli.Pin().Ls(ctx, func(settings *options.PinLsSettings) error {
+	pins, e := _node.client.Pin().Ls(ctx, func(settings *options.PinLsSettings) error {
 		settings.Type = "recursive"
 		return nil
 	})
@@ -175,4 +187,16 @@ func PinCheck(ctx context.Context, hash ...string) (int, error) {
 		}
 	}
 	return len(hash), nil
+}
+
+// InitNode ...
+func InitNode() error {
+	_node = &Node{
+		ModeType: "single",
+	}
+	if err := connectToNode(); err != nil {
+		return err
+	}
+	_node.ID = _node.MyID()
+	return nil
 }

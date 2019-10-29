@@ -4,7 +4,7 @@ import "testing"
 
 func init() {
 	SetNodePath(`D:\workspace\ipfs`)
-	if err := ConnectToNode(); err != nil {
+	if err := connectToNode(); err != nil {
 		log.Error(err)
 	}
 }
@@ -14,5 +14,5 @@ func TestNodeID(t *testing.T) {
 	if CheckNode() {
 		t.Failed()
 	}
-	t.Logf("%+v", MyID())
+	t.Logf("%+v", _node.MyID())
 }
