@@ -201,8 +201,7 @@ func (t *Task) Start() error {
 							log.With("id", work.ID()).Warn("work was finished")
 							continue
 						default:
-							log.With("id", work.ID()).Panic("work status wrong")
-							continue
+							log.With("id", work.ID()).Error("work status wrong")
 						}
 						log.With("id", work.ID()).Info("end run")
 						t.Finish(work.ID())
