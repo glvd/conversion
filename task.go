@@ -96,16 +96,16 @@ func LoadTaskMessage() (PoolMessage, error) {
 }
 
 // AddWorker ...
-func (t *Task) AddWorker(Work IWork) error {
-	log.With("id", Work.ID()).Info("add Work")
-	if err := Work.Store(); err != nil {
+func (t *Task) AddWorker(work IWork) error {
+	log.With("id", work.ID()).Info("add work")
+	if err := work.Store(); err != nil {
 		return err
 	}
-	e := AddTaskMessage(Work.ID())
+	e := AddTaskMessage(work.ID())
 	if e != nil {
 		return Wrap(e)
 	}
-	t.queue.Put(Work.ID())
+	t.queue.Put(work.ID())
 	return nil
 }
 
