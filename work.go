@@ -152,7 +152,7 @@ func dummy(src []byte) (IVideo, error) {
 func defaultWork(options ...WorkOptions) *WorkImpl {
 	impl := &WorkImpl{
 		ID:         "",
-		Status:     0,
+		Status:     WorkWaiting,
 		VideoPaths: nil,
 		PosterPath: "",
 		ThumbPath:  "",
