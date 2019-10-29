@@ -22,8 +22,8 @@ const (
 	ModeTypeSingle  = "single"
 )
 
-// Node ...
-type Node struct {
+// node ...
+type node struct {
 	ModeType string
 	client   *httpapi.HttpApi
 	ID       *PeerID
@@ -40,7 +40,7 @@ type PeerID struct {
 
 // DefaultNode ...
 var DefaultNode = "/ip4/127.0.0.1/tcp/5001"
-var _node *Node
+var _node *node
 
 func init() {
 	bytes, e := ioutil.ReadFile(os.Getenv("IPFS_PATH"))
@@ -51,7 +51,7 @@ func init() {
 }
 
 // MyID ...
-func (n *Node) MyID() *PeerID {
+func (n *node) MyID() *PeerID {
 	if n.ID == nil {
 		pid := &PeerID{}
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -191,7 +191,7 @@ func PinCheck(ctx context.Context, hash ...string) (int, error) {
 
 // InitNode ...
 func InitNode() error {
-	_node = &Node{
+	_node = &node{
 		ModeType: "single",
 	}
 	if err := connectToNode(); err != nil {
