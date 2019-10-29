@@ -202,6 +202,11 @@ func (t *Task) Start() error {
 							continue
 						default:
 							log.With("id", work.ID()).Error("work status wrong")
+							e := work.Reset()
+							if e != nil {
+								log.With("id", work.ID(), "error", e).Error("fix status error")
+								return
+							}
 						}
 						log.With("id", work.ID()).Info("end run")
 						t.Finish(work.ID())
