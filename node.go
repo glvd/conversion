@@ -3,7 +3,6 @@ package conversion
 import (
 	"context"
 	"errors"
-	"io/ioutil"
 	"os"
 	"strings"
 	"time"
@@ -21,6 +20,7 @@ import (
 const (
 	NodeTypeCluster = "cluster"
 	NodeTypeSingle  = "single"
+	NodeTypeDummy   = "dummy"
 )
 
 // Node ...
@@ -36,12 +36,16 @@ type Node interface {
 
 // singleNode ...
 type singleNode struct {
+	addr   string
 	client *httpapi.HttpApi
 	id     *PeerID
 }
 
 type clusterNode struct {
 	client client.Client
+}
+
+type dummyNode struct {
 }
 
 // PeerID ...
@@ -53,16 +57,15 @@ type PeerID struct {
 	PublicKey       string   `json:"PublicKey"`
 }
 
-// DefaultNode ...
-var DefaultNode = "/ip4/127.0.0.1/tcp/5001"
 var defaultNode Node
 
 func init() {
-	bytes, e := ioutil.ReadFile(os.Getenv("IPFS_PATH"))
-	if e != nil {
-		return
-	}
-	DefaultNode = strings.TrimSpace(string(bytes))
+	defaultNode = dummyNode{}
+}
+
+// Type ...
+func (n *singleNode) Type() string {
+	return NodeTypeSingle
 }
 
 // ID ...
@@ -81,28 +84,19 @@ func (n *singleNode) ID() *PeerID {
 	return n.id
 }
 
-// SetNodePath ...
-func SetNodePath(path string) {
-	bytes, e := ioutil.ReadFile(path)
-	if e != nil {
-		return
-	}
-	DefaultNode = strings.TrimSpace(string(bytes))
-}
-
-// SetNodeAddress ...
-func SetNodeAddress(addr string) {
-	DefaultNode = addr
-}
-
 // connectToNode ...
 func (n *singleNode) connect() (e error) {
-	ma, err := multiaddr.NewMultiaddr(DefaultNode)
+	ma, err := multiaddr.NewMultiaddr(n.addr)
 	if err != nil {
 		return err
 	}
 	n.client, e = httpapi.NewApi(ma)
 	return
+}
+
+// NewSingleNode ...
+func NewSingleNode(addr string) Node {
+	return &singleNode{addr: addr}
 }
 
 // CheckNode ...
@@ -204,14 +198,55 @@ func (n *singleNode) PinCheck(ctx context.Context, hash ...string) (int, error) 
 	return len(hash), nil
 }
 
-// InitNode ...
-func initNode() error {
-	_node = &singleNode{
-		ModeType: "single",
+// Type ...
+func (d dummyNode) Type() string {
+	return NodeTypeDummy
+}
+
+// ID ...
+func (d dummyNode) ID() *PeerID {
+	return &PeerID{
+		Addresses:       nil,
+		AgentVersion:    "",
+		ID:              "this is dummy",
+		ProtocolVersion: "",
+		PublicKey:       "",
 	}
-	if err := connectToNode(); err != nil {
-		return err
-	}
-	_node.ID = _node.MyID()
+}
+
+// AddFile ...
+func (d dummyNode) AddFile(ctx context.Context, filename string) (string, error) {
+	log.Infow("dummy", "func", "AddFile")
+	return "this is dummy", nil
+}
+
+// AddDir ...
+func (d dummyNode) AddDir(ctx context.Context, dir string) (string, error) {
+	log.Infow("dummy", "func", "AddDir")
+	return "this is dummy", nil
+}
+
+// PinHash ...
+func (d dummyNode) PinHash(ctx context.Context, hash string) error {
+	log.Infow("dummy", "func", "PinHash")
 	return nil
+}
+
+// UnpinHash ...
+func (d dummyNode) UnpinHash(ctx context.Context, hash string) error {
+	log.Infow("dummy", "func", "UnpinHash")
+	return nil
+}
+
+// PinCheck ...
+func (d dummyNode) PinCheck(ctx context.Context, hash ...string) (int, error) {
+	log.Infow("dummy", "func", "PinCheck")
+	return 0, nil
+}
+
+// RegisterNode ...
+func RegisterNode(node Node) {
+	if node != nil && defaultNode.Type() != NodeTypeDummy {
+		defaultNode = node
+	}
 }
