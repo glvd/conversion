@@ -16,17 +16,27 @@ import (
 	"github.com/ipfs/go-ipfs-http-client"
 )
 
-// ModeTypeCluster ...
+// NodeTypeCluster ...
 const (
-	ModeTypeCluster = "cluster"
-	ModeTypeSingle  = "single"
+	NodeTypeCluster = "cluster"
+	NodeTypeSingle  = "single"
 )
 
-// node ...
-type node struct {
-	ModeType string
-	client   *httpapi.HttpApi
-	ID       *PeerID
+// Node ...
+type Node interface {
+	Type() string
+	ID() *PeerID
+	AddFile(ctx context.Context, filename string) (string, error)
+	AddDir(ctx context.Context, dir string) (string, error)
+}
+
+// singleNode ...
+type singleNode struct {
+	client *httpapi.HttpApi
+	ID     *PeerID
+}
+
+type clusterNode struct {
 }
 
 // PeerID ...
@@ -40,7 +50,7 @@ type PeerID struct {
 
 // DefaultNode ...
 var DefaultNode = "/ip4/127.0.0.1/tcp/5001"
-var _node *node
+var _node *singleNode
 
 func init() {
 	bytes, e := ioutil.ReadFile(os.Getenv("IPFS_PATH"))
@@ -51,7 +61,7 @@ func init() {
 }
 
 // MyID ...
-func (n *node) MyID() *PeerID {
+func (n *singleNode) MyID() *PeerID {
 	if n.ID == nil {
 		pid := &PeerID{}
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -191,7 +201,7 @@ func PinCheck(ctx context.Context, hash ...string) (int, error) {
 
 // InitNode ...
 func InitNode() error {
-	_node = &node{
+	_node = &singleNode{
 		ModeType: "single",
 	}
 	if err := connectToNode(); err != nil {

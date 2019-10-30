@@ -145,7 +145,7 @@ func (t *Task) Start() error {
 		return errors.New("sql service was not ready")
 	}
 	if !CheckNode() {
-		return errors.New("node service was not ready")
+		return errors.New("singleNode service was not ready")
 	}
 
 	if err := t.restore(); err != nil {
