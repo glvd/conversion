@@ -3,7 +3,7 @@ module github.com/glvd/conversion
 go 1.13
 
 require (
-	github.com/glvd/cluster v0.0.0-20191024070700-7f2e7ef65d90
+	github.com/glvd/cluster-api v0.0.0-20191030100122-132b61b6ee62
 	github.com/glvd/split v0.0.0-20191016090256-29c9a846edf4
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/gocacher/badger-cache v0.0.3

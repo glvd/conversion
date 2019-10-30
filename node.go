@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/glvd/cluster/api/rest/client"
+	api "github.com/glvd/cluster-api"
 	files "github.com/ipfs/go-ipfs-files"
 	"github.com/ipfs/interface-go-ipfs-core/options"
 	"github.com/ipfs/interface-go-ipfs-core/path"
@@ -42,7 +42,7 @@ type singleNode struct {
 }
 
 type clusterNode struct {
-	client client.Client
+	client api.Client
 }
 
 type dummyNode struct {
@@ -97,6 +97,11 @@ func (n *singleNode) connect() (e error) {
 // NewSingleNode ...
 func NewSingleNode(addr string) Node {
 	return &singleNode{addr: addr}
+}
+
+// NewClusterNode ...
+func NewClusterNode() Node {
+	return &clusterNode{}
 }
 
 // CheckNode ...
@@ -196,6 +201,56 @@ func (n *singleNode) PinCheck(ctx context.Context, hash ...string) (int, error) 
 		}
 	}
 	return len(hash), nil
+}
+
+// Type ...
+func (c *clusterNode) Type() string {
+	return NodeTypeCluster
+
+}
+
+// ID ...
+func (c *clusterNode) ID() *PeerID {
+	id, e := c.client.ID(context.Background())
+	if e != nil {
+		return nil
+	}
+	var addrs []string
+	for _, addr := range id.Addresses {
+		addrs = append(addrs, addr.String())
+	}
+	return &PeerID{
+		Addresses:       addrs,
+		AgentVersion:    id.IPFS.AgentVersion,
+		ID:              id.ID.String(),
+		ProtocolVersion: "",
+		PublicKey:       "",
+	}
+}
+
+// AddFile ...
+func (c *clusterNode) AddFile(ctx context.Context, filename string) (string, error) {
+	panic("implement me")
+}
+
+// AddDir ...
+func (c *clusterNode) AddDir(ctx context.Context, dir string) (string, error) {
+	panic("implement me")
+}
+
+// PinHash ...
+func (c *clusterNode) PinHash(ctx context.Context, hash string) error {
+	panic("implement me")
+}
+
+// UnpinHash ...
+func (c *clusterNode) UnpinHash(ctx context.Context, hash string) error {
+	panic("implement me")
+}
+
+// PinCheck ...
+func (c *clusterNode) PinCheck(ctx context.Context, hash ...string) (int, error) {
+	panic("implement me")
 }
 
 // Type ...
