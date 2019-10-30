@@ -223,14 +223,14 @@ func (c *clusterNode) ID() *PeerID {
 		Addresses:       addrs,
 		AgentVersion:    id.IPFS.AgentVersion,
 		ID:              id.ID.String(),
-		ProtocolVersion: "",
-		PublicKey:       "",
+		ProtocolVersion: string(id.RPCProtocolVersion),
+		//PublicKey:       "",
 	}
 }
 
 // AddFile ...
 func (c *clusterNode) AddFile(ctx context.Context, filename string) (string, error) {
-	panic("implement me")
+	panic("todo")
 }
 
 // AddDir ...
