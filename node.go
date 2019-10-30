@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/glvd/cluster/api/rest/client"
 	files "github.com/ipfs/go-ipfs-files"
 	"github.com/ipfs/interface-go-ipfs-core/options"
 	"github.com/ipfs/interface-go-ipfs-core/path"
@@ -28,15 +29,19 @@ type Node interface {
 	ID() *PeerID
 	AddFile(ctx context.Context, filename string) (string, error)
 	AddDir(ctx context.Context, dir string) (string, error)
+	PinHash(ctx context.Context, hash string) error
+	UnpinHash(ctx context.Context, hash string) error
+	PinCheck(ctx context.Context, hash ...string) (int, error)
 }
 
 // singleNode ...
 type singleNode struct {
 	client *httpapi.HttpApi
-	ID     *PeerID
+	id     *PeerID
 }
 
 type clusterNode struct {
+	client client.Client
 }
 
 // PeerID ...
@@ -50,7 +55,7 @@ type PeerID struct {
 
 // DefaultNode ...
 var DefaultNode = "/ip4/127.0.0.1/tcp/5001"
-var _node *singleNode
+var defaultNode Node
 
 func init() {
 	bytes, e := ioutil.ReadFile(os.Getenv("IPFS_PATH"))
@@ -60,9 +65,9 @@ func init() {
 	DefaultNode = strings.TrimSpace(string(bytes))
 }
 
-// MyID ...
-func (n *singleNode) MyID() *PeerID {
-	if n.ID == nil {
+// ID ...
+func (n *singleNode) ID() *PeerID {
+	if n.id == nil {
 		pid := &PeerID{}
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
@@ -71,9 +76,9 @@ func (n *singleNode) MyID() *PeerID {
 			log.Error(e)
 			return nil
 		}
-		n.ID = pid
+		n.id = pid
 	}
-	return n.ID
+	return n.id
 }
 
 // SetNodePath ...
@@ -91,18 +96,18 @@ func SetNodeAddress(addr string) {
 }
 
 // connectToNode ...
-func connectToNode() (e error) {
+func (n *singleNode) connect() (e error) {
 	ma, err := multiaddr.NewMultiaddr(DefaultNode)
 	if err != nil {
 		return err
 	}
-	_node.client, e = httpapi.NewApi(ma)
+	n.client, e = httpapi.NewApi(ma)
 	return
 }
 
 // CheckNode ...
 func CheckNode() bool {
-	return _node != nil
+	panic("todo")
 }
 
 // ResolvedHash ...
@@ -115,12 +120,12 @@ func ResolvedHash(path path.Resolved) (string, error) {
 }
 
 // AddFile ...
-func AddFile(ctx context.Context, filename string) (string, error) {
+func (n *singleNode) AddFile(ctx context.Context, filename string) (string, error) {
 	file, e := os.Open(filename)
 	if e != nil {
 		return "", e
 	}
-	resolved, e := _node.client.Unixfs().Add(ctx, files.NewReaderFile(file),
+	resolved, e := n.client.Unixfs().Add(ctx, files.NewReaderFile(file),
 		func(settings *options.UnixfsAddSettings) error {
 			settings.Pin = true
 			return nil
@@ -132,7 +137,7 @@ func AddFile(ctx context.Context, filename string) (string, error) {
 }
 
 // AddDir ...
-func AddDir(ctx context.Context, dir string) (string, error) {
+func (n *singleNode) AddDir(ctx context.Context, dir string) (string, error) {
 	stat, err := os.Lstat(dir)
 	if err != nil {
 		return "", err
@@ -145,7 +150,7 @@ func AddDir(ctx context.Context, dir string) (string, error) {
 	//不加目录
 	//slf := files.NewSliceDirectory([]files.DirEntry{files.FileEntry(filepath.Base(dir), sf)})
 	//reader := files.NewMultiFileReader(slf, true)
-	resolved, e := _node.client.Unixfs().Add(ctx, sf,
+	resolved, e := n.client.Unixfs().Add(ctx, sf,
 		func(settings *options.UnixfsAddSettings) error {
 			settings.Pin = true
 			return nil
@@ -158,24 +163,24 @@ func AddDir(ctx context.Context, dir string) (string, error) {
 }
 
 // PinHash ...
-func PinHash(ctx context.Context, hash string) error {
-	return _node.client.Pin().Add(ctx, path.New(hash), func(settings *options.PinAddSettings) error {
+func (n *singleNode) PinHash(ctx context.Context, hash string) error {
+	return n.client.Pin().Add(ctx, path.New(hash), func(settings *options.PinAddSettings) error {
 		settings.Recursive = true
 		return nil
 	})
 }
 
 // UnpinHash ...
-func UnpinHash(ctx context.Context, hash string) error {
-	return _node.client.Pin().Rm(ctx, path.New(hash), func(settings *options.PinRmSettings) error {
+func (n *singleNode) UnpinHash(ctx context.Context, hash string) error {
+	return n.client.Pin().Rm(ctx, path.New(hash), func(settings *options.PinRmSettings) error {
 		settings.Recursive = true
 		return nil
 	})
 }
 
 // PinCheck ...
-func PinCheck(ctx context.Context, hash ...string) (int, error) {
-	pins, e := _node.client.Pin().Ls(ctx, func(settings *options.PinLsSettings) error {
+func (n *singleNode) PinCheck(ctx context.Context, hash ...string) (int, error) {
+	pins, e := n.client.Pin().Ls(ctx, func(settings *options.PinLsSettings) error {
 		settings.Type = "recursive"
 		return nil
 	})
@@ -200,7 +205,7 @@ func PinCheck(ctx context.Context, hash ...string) (int, error) {
 }
 
 // InitNode ...
-func InitNode() error {
+func initNode() error {
 	_node = &singleNode{
 		ModeType: "single",
 	}

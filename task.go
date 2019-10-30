@@ -12,15 +12,6 @@ import (
 	"go.uber.org/atomic"
 )
 
-// RunType ...
-type RunType string
-
-// RunTypePath ...
-const (
-	RunTypePath RunType = "path"
-	RunTypeJSON RunType = "json"
-)
-
 // Task ...
 type Task struct {
 	context  context.Context
