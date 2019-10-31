@@ -272,15 +272,14 @@ func (w *Work) Update() error {
 // Stop ...
 func (w *Work) Stop() error {
 	if w.cancel != nil {
-		defer w.cancel()
-		w.WorkImpl.Status = WorkStopped
-		e := w.Update()
-		if e != nil {
-			return e
-		}
-
+		w.cancel()
 	}
-	return errors.New("cancel is nil")
+	w.WorkImpl.Status = WorkStopped
+	e := w.Update()
+	if e != nil {
+		return e
+	}
+	return nil
 }
 
 // CheckStop ...
