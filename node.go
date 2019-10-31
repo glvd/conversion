@@ -111,7 +111,7 @@ func (d dummyNode) PinCheck(ctx context.Context, hash ...string) (int, error) {
 
 // RegisterNode ...
 func RegisterNode(node Node) {
-	if node != nil && globalNode.Type() != NodeTypeDummy {
+	if node != nil && globalNode.Type() == NodeTypeDummy {
 		log.Infow("node registerd", "type", node.Type())
 		globalNode = node
 	}
