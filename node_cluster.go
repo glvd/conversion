@@ -9,37 +9,39 @@ import (
 	api "github.com/glvd/cluster-api"
 	"github.com/ipfs/go-cid"
 	files "github.com/ipfs/go-ipfs-files"
+	"github.com/multiformats/go-multiaddr"
 )
 
 type clusterNode struct {
-	client            api.Client
-	addParam          *api.AddParams
-	recursive         bool
-	quiet             bool
-	quieter           bool
-	noStream          bool
-	layout            string
-	wrapWithDirectory bool
-	hidden            bool
-	chunker           string
-	rawLeaves         bool
-	cidVersion        int
-	hash              string
-	local             bool
-	name              string
-	replicationMin    int
-	replicationMax    int
-	metadata          string
-	allocations       string
-	nocopy            bool
-	shard             bool
-	cfg               *api.Config
+	client   api.Client
+	addParam *api.AddParams
+	addr     string
+	//recursive         bool
+	//quiet             bool
+	//quieter           bool
+	//noStream          bool
+	//layout            string
+	//wrapWithDirectory bool
+	//hidden            bool
+	//chunker           string
+	//rawLeaves         bool
+	//cidVersion        int
+	//hash              string
+	//local             bool
+	//name              string
+	//replicationMin    int
+	//replicationMax    int
+	//metadata          string
+	//allocations       string
+	//nocopy            bool
+	//shard             bool
+	//cfg               *api.Config
 }
 
 // NewClusterNode ...
-func NewClusterNode(cfg *api.Config) Node {
+func NewClusterNode(addr string) Node {
 	node := &clusterNode{
-		cfg:      cfg,
+		addr:     addr,
 		addParam: api.DefaultAddParams(),
 	}
 	if err := node.connect(); err != nil {
@@ -184,6 +186,13 @@ func (c *clusterNode) PinCheck(ctx context.Context, hash ...string) (int, error)
 }
 
 func (c *clusterNode) connect() (e error) {
-	c.client, e = api.DefaultCluster(c.cfg)
+	a, e := multiaddr.NewMultiaddr(c.addr)
+	if e != nil {
+		return e
+	}
+	c.client, e = api.DefaultCluster(&api.Config{
+		APIAddr:           a,
+		DisableKeepAlives: true,
+	})
 	return
 }
