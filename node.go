@@ -42,6 +42,7 @@ type singleNode struct {
 
 type clusterNode struct {
 	client            api.Client
+	addParam          *api.AddParams
 	recursive         bool
 	quiet             bool
 	quieter           bool
@@ -60,6 +61,7 @@ type clusterNode struct {
 	metadata          string
 	allocations       string
 	nocopy            bool
+	shard             bool
 }
 
 type dummyNode struct {
@@ -118,7 +120,9 @@ func NewSingleNode(addr string) Node {
 
 // NewClusterNode ...
 func NewClusterNode() Node {
-	return &clusterNode{}
+	return &clusterNode{
+		addParam: api.DefaultAddParams(),
+	}
 }
 
 // CheckNode ...
@@ -247,12 +251,50 @@ func (c *clusterNode) ID() *PeerID {
 
 // AddFile ...
 func (c *clusterNode) AddFile(ctx context.Context, filename string) (string, error) {
-	c.client.Add(ctx)
+	//param := api.DefaultAddParams()
+	//p.ReplicationFactorMin = c.Int("replication-min")
+	//p.ReplicationFactorMax = c.Int("replication-max")
+	out := make(chan *api.AddedOutput, 1)
+	go func() {
+		defer close(out)
+		e := c.client.Add(ctx, []string{filename}, c.addParam, out)
+		if e != nil {
+			return
+		}
+	}()
+	last := ""
+	for v := range out {
+		last = v.Cid.String()
+	}
+	return last, nil
 }
 
 // AddDir ...
 func (c *clusterNode) AddDir(ctx context.Context, dir string) (string, error) {
-	panic("implement me")
+	stat, err := os.Lstat(dir)
+	if err != nil {
+		return "", err
+	}
+
+	sf, err := files.NewSerialFile(dir, false, stat)
+	if err != nil {
+		return "", err
+	}
+	d := files.NewMapDirectory(map[string]files.Node{"": sf}) // unwrapped on the other side
+
+	out := make(chan *api.AddedOutput, 1)
+	go func() {
+		defer close(out)
+		e := c.client.AddMultiFile(ctx, files.NewMultiFileReader(d, false), c.addParam, out)
+		if e != nil {
+			return
+		}
+	}()
+	last := ""
+	for v := range out {
+		last = v.Cid.String()
+	}
+	return last, nil
 }
 
 // PinHash ...
