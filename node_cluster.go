@@ -158,7 +158,17 @@ func (c *clusterNode) UnpinHash(ctx context.Context, hash string) error {
 
 // PinCheck ...
 func (c *clusterNode) PinCheck(ctx context.Context, hash ...string) (int, error) {
-	return 0, nil
+	for i, h := range hash {
+		decoded, e := cid.Decode(h)
+		if e != nil {
+			return i, e
+		}
+		_, err := c.client.Status(ctx, decoded, false)
+		if err != nil {
+			return i, err
+		}
+	}
+	return len(hash), nil
 }
 
 func (c *clusterNode) connect() (e error) {

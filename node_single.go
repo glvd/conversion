@@ -2,6 +2,7 @@ package conversion
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"time"
 
@@ -134,7 +135,7 @@ func (n *singleNode) PinCheck(ctx context.Context, hash ...string) (int, error) 
 	log.Infow("pincheck", "hash", ps)
 	for i, v := range hash {
 		if !ExistVerifyString(v, ps...) {
-			return i, nil
+			return i, fmt.Errorf("hash[%s] is not pinned", v)
 		}
 	}
 	return len(hash), nil
