@@ -172,7 +172,8 @@ func (t *Task) Start() error {
 							log.With("id", s, "error", e).Error("load work")
 							continue
 						}
-						if !t.Running(work) && work.Status() == WorkRunning {
+						if work.Status() == WorkRunning {
+							t.Running(work)
 							e := work.Reset()
 							if e != nil {
 								log.With("id", work.ID(), "error", e).Error("reset")
