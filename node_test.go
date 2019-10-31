@@ -20,6 +20,14 @@ func TestNewSingleNode(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log(s)
+	err = node.PinHash(context.Background(), s)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = node.UnpinHash(context.Background(), s)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 // TestNodeID ...
@@ -38,4 +46,14 @@ func TestNewClusterNode(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log(s)
+
+	err = node.PinHash(context.Background(), s)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = node.UnpinHash(context.Background(), s)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
