@@ -63,6 +63,7 @@ type clusterNode struct {
 	allocations       string
 	nocopy            bool
 	shard             bool
+	cfg               *api.Config
 }
 
 type dummyNode struct {
@@ -116,19 +117,23 @@ func (n *singleNode) connect() (e error) {
 
 // NewSingleNode ...
 func NewSingleNode(addr string) Node {
-	return &singleNode{addr: addr}
+	node := &singleNode{addr: addr}
+	if err := node.connect(); err != nil {
+		panic(err)
+	}
+	return node
 }
 
 // NewClusterNode ...
 func NewClusterNode(cfg *api.Config) Node {
-	client, e := api.DefaultCluster(cfg)
-	if e != nil {
-		panic(e)
-	}
-	return &clusterNode{
-		client:   client,
+	node := &clusterNode{
+		cfg:      cfg,
 		addParam: api.DefaultAddParams(),
 	}
+	if err := node.connect(); err != nil {
+		panic(err)
+	}
+	return node
 }
 
 // CheckNode ...
@@ -272,6 +277,7 @@ func (c *clusterNode) AddFile(ctx context.Context, filename string) (s string, e
 		}
 	}()
 	for v := range out {
+		log.Info(v.Cid.String())
 		s = v.Cid.String()
 	}
 	wg.Wait()
@@ -303,6 +309,7 @@ func (c *clusterNode) AddDir(ctx context.Context, dir string) (s string, e error
 		}
 	}()
 	for v := range out {
+		log.Info(v.Cid.String())
 		s = v.Cid.String()
 	}
 	wg.Wait()
@@ -322,6 +329,11 @@ func (c *clusterNode) UnpinHash(ctx context.Context, hash string) error {
 // PinCheck ...
 func (c *clusterNode) PinCheck(ctx context.Context, hash ...string) (int, error) {
 	panic("implement me")
+}
+
+func (c *clusterNode) connect() (e error) {
+	c.client, e = api.DefaultCluster(c.cfg)
+	return
 }
 
 // Type ...
