@@ -255,17 +255,22 @@ func (t *Task) StartWork(id string) error {
 func (t *Task) StopWork(id string) {
 	if value, ok := t.running.Load(id); ok {
 		if work, b := value.(IWork); b {
-			if err := work.Stop(); err != nil {
+			if e := work.Stop(); e != nil {
+				log.Error(e)
+			} else {
 				return
 			}
 		}
 	}
 	iwork, err := LoadWork(id)
 	if err == nil {
-		if err := iwork.Stop(); err != nil {
+		if e := iwork.Stop(); e != nil {
+			log.Error(e)
+		} else {
 			return
 		}
 	}
+	log.Error(err)
 }
 
 // AllRun ...
