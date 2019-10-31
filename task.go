@@ -260,6 +260,12 @@ func (t *Task) StopWork(id string) {
 			}
 		}
 	}
+	iwork, err := LoadWork(id)
+	if err == nil {
+		if err := iwork.Stop(); err != nil {
+			return
+		}
+	}
 }
 
 // AllRun ...
