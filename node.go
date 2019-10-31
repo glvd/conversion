@@ -49,6 +49,11 @@ func CheckNode() bool {
 	panic("todo")
 }
 
+// CidHash ...
+func CidHash(path path.Resolved) string {
+	return path.Cid().String()
+}
+
 // ResolvedHash ...
 func ResolvedHash(path path.Resolved) (string, error) {
 	ss := strings.Split(path.String(), "/")

@@ -24,6 +24,13 @@ func TestNewSingleNode(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	i, err := node.PinCheck(context.Background(), s)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(i)
+
 	err = node.UnpinHash(context.Background(), s)
 	if err != nil {
 		t.Fatal(err)

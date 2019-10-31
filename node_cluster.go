@@ -158,7 +158,7 @@ func (c *clusterNode) UnpinHash(ctx context.Context, hash string) error {
 
 // PinCheck ...
 func (c *clusterNode) PinCheck(ctx context.Context, hash ...string) (int, error) {
-	panic("implement me")
+	return 0, nil
 }
 
 func (c *clusterNode) connect() (e error) {

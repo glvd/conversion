@@ -128,14 +128,10 @@ func (n *singleNode) PinCheck(ctx context.Context, hash ...string) (int, error) 
 		return -1, e
 	}
 	var ps []string
-	var h string
 	for _, pin := range pins {
-		if h, e = ResolvedHash(pin.Path()); e != nil {
-			return 0, e
-		}
-		ps = append(ps, h)
+		ps = append(ps, CidHash(pin.Path()))
 	}
-
+	log.Infow("pincheck", "hash", ps)
 	for i, v := range hash {
 		if !ExistVerifyString(v, ps...) {
 			return i, nil
