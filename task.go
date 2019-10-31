@@ -89,10 +89,18 @@ func LoadTaskMessage() (PoolMessage, error) {
 // AddWorker ...
 func (t *Task) AddWorker(work IWork) error {
 	log.With("id", work.ID()).Info("add work")
+	iwork, e := LoadWork(work.ID())
+	if e == nil {
+		if iwork.Status() == WorkStopped {
+			if err := iwork.Reset(); err != nil {
+				return Wrap(err)
+			}
+		}
+	}
 	if err := work.Store(); err != nil {
 		return err
 	}
-	e := AddTaskMessage(work.ID())
+	e = AddTaskMessage(work.ID())
 	if e != nil {
 		return Wrap(e)
 	}
