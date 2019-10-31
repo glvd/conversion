@@ -269,8 +269,9 @@ func (t *Task) StopWork(id string) {
 		} else {
 			return
 		}
+	} else {
+		log.Error(err)
 	}
-	log.Error(err)
 }
 
 // AllRun ...
