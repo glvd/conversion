@@ -46,7 +46,7 @@ func init() {
 
 // CheckNode ...
 func CheckNode() bool {
-	panic("todo")
+	return globalNode.ID() != nil
 }
 
 // CidHash ...
