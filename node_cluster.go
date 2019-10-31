@@ -2,6 +2,7 @@ package conversion
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"sync"
 
@@ -163,9 +164,20 @@ func (c *clusterNode) PinCheck(ctx context.Context, hash ...string) (int, error)
 		if e != nil {
 			return i, e
 		}
-		_, err := c.client.Status(ctx, decoded, false)
+		info, err := c.client.Status(ctx, decoded, false)
 		if err != nil {
 			return i, err
+		}
+		pinned := false
+		for k, m := range info.PeerMap {
+			if m.Status.Match(api.TrackerStatusPinned) {
+				pinned = true
+				break
+			}
+			log.Infow("pincheck", "peer", k, "hash", info.Cid.String(), "status", m.Status.String())
+		}
+		if !pinned {
+			return i, fmt.Errorf("hash[%s] is not pinned", h)
 		}
 	}
 	return len(hash), nil

@@ -133,9 +133,9 @@ func (n *singleNode) PinCheck(ctx context.Context, hash ...string) (int, error) 
 		ps = append(ps, CidHash(pin.Path()))
 	}
 	log.Infow("pincheck", "hash", ps)
-	for i, v := range hash {
-		if !ExistVerifyString(v, ps...) {
-			return i, fmt.Errorf("hash[%s] is not pinned", v)
+	for i, h := range hash {
+		if !ExistVerifyString(h, ps...) {
+			return i, fmt.Errorf("hash[%s] is not pinned", h)
 		}
 	}
 	return len(hash), nil
