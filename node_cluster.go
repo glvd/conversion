@@ -144,7 +144,16 @@ func (c *clusterNode) PinHash(ctx context.Context, hash string) error {
 
 // UnpinHash ...
 func (c *clusterNode) UnpinHash(ctx context.Context, hash string) error {
-	panic("implement me")
+	decoded, e := cid.Decode(hash)
+	if e != nil {
+		return e
+	}
+	pin, e := c.client.Unpin(ctx, decoded)
+	if e != nil {
+		return e
+	}
+	log.Infow("unpinned", "name", pin.Name, "hash", pin.Cid.String())
+	return nil
 }
 
 // PinCheck ...

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/ipfs/go-ipfs-http-client"
 	"github.com/ipfs/interface-go-ipfs-core/path"
 )
 
