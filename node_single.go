@@ -73,7 +73,7 @@ func (n *singleNode) AddFile(ctx context.Context, filename string) (string, erro
 	if e != nil {
 		return "", e
 	}
-	return ResolvedHash(resolved)
+	return CidHash(resolved), nil
 }
 
 // AddDir ...
@@ -99,7 +99,7 @@ func (n *singleNode) AddDir(ctx context.Context, dir string) (string, error) {
 		return "", e
 	}
 
-	return ResolvedHash(resolved)
+	return CidHash(resolved), nil
 }
 
 // PinHash ...
