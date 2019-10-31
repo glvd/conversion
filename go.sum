@@ -106,6 +106,8 @@ github.com/glvd/cluster v0.0.0-20191024070700-7f2e7ef65d90 h1:TZCiVrxY5x//XCwHW2
 github.com/glvd/cluster v0.0.0-20191024070700-7f2e7ef65d90/go.mod h1:hOR/SOpel9CTJKcdK1jBxfUfldW4wk+CPyAb/VnlHF0=
 github.com/glvd/cluster-api v0.0.0-20191030100122-132b61b6ee62 h1:IbvGCFWR2phrCs/QxGz8/susHAUF6469pXJK7+2M4nI=
 github.com/glvd/cluster-api v0.0.0-20191030100122-132b61b6ee62/go.mod h1:nc/ZA5rETHQWGuLabvuiNvtbWSxieV7FJ712akX2Zzo=
+github.com/glvd/cluster-api v0.0.0-20191030102933-aa5db0a840a0 h1:Jpk/8MjmgWkabf6i7IDKAERfbLelMUDUYBLcjCLRa2g=
+github.com/glvd/cluster-api v0.0.0-20191030102933-aa5db0a840a0/go.mod h1:nc/ZA5rETHQWGuLabvuiNvtbWSxieV7FJ712akX2Zzo=
 github.com/glvd/split v0.0.0-20191016090256-29c9a846edf4 h1:e0kzU7Z0V7wz9yrYDIGGw/EYMYpF0yeBkmyFnDjrQHE=
 github.com/glvd/split v0.0.0-20191016090256-29c9a846edf4/go.mod h1:VLovpjw2K3giBsZLHrTpStV78OxM3iUdXRUbwI+wDgk=
 github.com/go-check/check v0.0.0-20180628173108-788fd7840127 h1:0gkP6mzaMqkmpcJYCFOLkIBwI7xFExG03bbkOkCvUPI=

@@ -9,11 +9,10 @@ import (
 
 	api "github.com/glvd/cluster-api"
 	files "github.com/ipfs/go-ipfs-files"
+	"github.com/ipfs/go-ipfs-http-client"
 	"github.com/ipfs/interface-go-ipfs-core/options"
 	"github.com/ipfs/interface-go-ipfs-core/path"
 	"github.com/multiformats/go-multiaddr"
-
-	"github.com/ipfs/go-ipfs-http-client"
 )
 
 // NodeTypeCluster ...
@@ -42,7 +41,25 @@ type singleNode struct {
 }
 
 type clusterNode struct {
-	client api.Client
+	client            api.Client
+	recursive         bool
+	quiet             bool
+	quieter           bool
+	noStream          bool
+	layout            string
+	wrapWithDirectory bool
+	hidden            bool
+	chunker           string
+	rawLeaves         bool
+	cidVersion        int
+	hash              string
+	local             bool
+	name              string
+	replicationMin    int
+	replicationMax    int
+	metadata          string
+	allocations       string
+	nocopy            bool
 }
 
 type dummyNode struct {
@@ -230,7 +247,7 @@ func (c *clusterNode) ID() *PeerID {
 
 // AddFile ...
 func (c *clusterNode) AddFile(ctx context.Context, filename string) (string, error) {
-	panic("todo")
+	c.client.Add(ctx)
 }
 
 // AddDir ...
