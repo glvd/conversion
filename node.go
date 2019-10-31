@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	api "github.com/glvd/cluster-api"
@@ -76,10 +77,10 @@ type PeerID struct {
 	PublicKey       string   `json:"PublicKey"`
 }
 
-var defaultNode Node
+var globalNode Node
 
 func init() {
-	defaultNode = dummyNode{}
+	globalNode = dummyNode{}
 }
 
 // Type ...
@@ -119,8 +120,13 @@ func NewSingleNode(addr string) Node {
 }
 
 // NewClusterNode ...
-func NewClusterNode() Node {
+func NewClusterNode(cfg *api.Config) Node {
+	client, e := api.DefaultCluster(cfg)
+	if e != nil {
+		panic(e)
+	}
 	return &clusterNode{
+		client:   client,
 		addParam: api.DefaultAddParams(),
 	}
 }
@@ -250,27 +256,30 @@ func (c *clusterNode) ID() *PeerID {
 }
 
 // AddFile ...
-func (c *clusterNode) AddFile(ctx context.Context, filename string) (string, error) {
+func (c *clusterNode) AddFile(ctx context.Context, filename string) (s string, e error) {
 	//param := api.DefaultAddParams()
 	//p.ReplicationFactorMin = c.Int("replication-min")
 	//p.ReplicationFactorMax = c.Int("replication-max")
-	out := make(chan *api.AddedOutput, 1)
+	out := make(chan *api.AddedOutput)
+	wg := sync.WaitGroup{}
+	wg.Add(1)
 	go func() {
-		defer close(out)
-		e := c.client.Add(ctx, []string{filename}, c.addParam, out)
-		if e != nil {
+		defer wg.Done()
+		err := c.client.Add(ctx, []string{filename}, c.addParam, out)
+		if err != nil {
+			e = err
 			return
 		}
 	}()
-	last := ""
 	for v := range out {
-		last = v.Cid.String()
+		s = v.Cid.String()
 	}
-	return last, nil
+	wg.Wait()
+	return s, e
 }
 
 // AddDir ...
-func (c *clusterNode) AddDir(ctx context.Context, dir string) (string, error) {
+func (c *clusterNode) AddDir(ctx context.Context, dir string) (s string, e error) {
 	stat, err := os.Lstat(dir)
 	if err != nil {
 		return "", err
@@ -282,19 +291,22 @@ func (c *clusterNode) AddDir(ctx context.Context, dir string) (string, error) {
 	}
 	d := files.NewMapDirectory(map[string]files.Node{"": sf}) // unwrapped on the other side
 
-	out := make(chan *api.AddedOutput, 1)
+	out := make(chan *api.AddedOutput)
+	wg := sync.WaitGroup{}
+	wg.Add(1)
 	go func() {
-		defer close(out)
-		e := c.client.AddMultiFile(ctx, files.NewMultiFileReader(d, false), c.addParam, out)
-		if e != nil {
+		defer wg.Done()
+		err := c.client.AddMultiFile(ctx, files.NewMultiFileReader(d, false), c.addParam, out)
+		if err != nil {
+			e = err
 			return
 		}
 	}()
-	last := ""
 	for v := range out {
-		last = v.Cid.String()
+		s = v.Cid.String()
 	}
-	return last, nil
+	wg.Wait()
+	return s, e
 }
 
 // PinHash ...
@@ -360,7 +372,7 @@ func (d dummyNode) PinCheck(ctx context.Context, hash ...string) (int, error) {
 
 // RegisterNode ...
 func RegisterNode(node Node) {
-	if node != nil && defaultNode.Type() != NodeTypeDummy {
-		defaultNode = node
+	if node != nil && globalNode.Type() != NodeTypeDummy {
+		globalNode = node
 	}
 }

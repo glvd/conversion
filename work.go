@@ -314,7 +314,7 @@ func (w *Work) Run(ctx context.Context) (e error) {
 		video.Episode = strconv.Itoa(GetFileIndex(path))
 		if err := w.CheckStop(func() error {
 			if !ExistVerifyString("source", w.Skip...) {
-				s, e := AddFile(ctx, path)
+				s, e := globalNode.AddFile(ctx, path)
 				if e != nil {
 					return Wrap(e)
 				}
@@ -331,7 +331,7 @@ func (w *Work) Run(ctx context.Context) (e error) {
 				if e != nil {
 					return Wrap(e)
 				}
-				s, e := AddDir(ctx, f.Output())
+				s, e := globalNode.AddDir(ctx, f.Output())
 				if e != nil {
 					return Wrap(e)
 				}
@@ -345,7 +345,7 @@ func (w *Work) Run(ctx context.Context) (e error) {
 
 		if err := w.CheckStop(func() error {
 			if !ExistVerifyString("poster", w.Skip...) && w.PosterPath != "" {
-				s, e := AddFile(ctx, w.PosterPath)
+				s, e := globalNode.AddFile(ctx, w.PosterPath)
 				if e != nil {
 					return Wrap(e)
 				}
@@ -357,7 +357,7 @@ func (w *Work) Run(ctx context.Context) (e error) {
 		}
 		if err := w.CheckStop(func() error {
 			if !ExistVerifyString("thumb", w.Skip...) && w.PosterPath != "" {
-				s, e := AddFile(ctx, w.ThumbPath)
+				s, e := globalNode.AddFile(ctx, w.ThumbPath)
 				if e != nil {
 					return Wrap(e)
 				}
