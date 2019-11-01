@@ -197,6 +197,7 @@ func (t *Task) Start() error {
 	wg := sync.WaitGroup{}
 	for i := 0; i < t.Limit; i++ {
 		wg.Add(1)
+		log.Infow("task thread start", "idx", i)
 		go func(wg *sync.WaitGroup) {
 			defer wg.Done()
 		WorkEnd:
