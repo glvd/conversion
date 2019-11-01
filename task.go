@@ -136,6 +136,10 @@ func (r *Running) cache() error {
 // AddWorker ...
 func (t *Task) AddWorker(work IWork, force bool) error {
 	log.With("id", work.ID()).Info("add work")
+	if t.running.Has(work.ID()) {
+		return nil
+	}
+
 	iwork, e := LoadWork(work.ID())
 	if e == nil {
 		if force {
