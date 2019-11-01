@@ -195,7 +195,7 @@ func (t *Task) Start() error {
 		log.Warnw("if not your first run,this has some problems", "error", err)
 	}
 
-	wg := sync.WaitGroup{}
+	wg := &sync.WaitGroup{}
 	for i := 0; i < t.Limit; i++ {
 		wg.Add(1)
 		log.Infow("task thread start", "idx", i)
@@ -266,10 +266,11 @@ func (t *Task) Start() error {
 				//service queuing for new Work
 				time.Sleep(5 * time.Second)
 			}
-		}(&wg)
+		}(wg)
 	}
+
+	log.Info("waiting for end")
 	wg.Wait()
-	log.Info("end")
 	return nil
 }
 
