@@ -12,11 +12,17 @@ import (
 	"go.uber.org/atomic"
 )
 
+// Running ...
+type Running struct {
+	running sync.Map
+	waiting sync.Map
+}
+
 // Task ...
 type Task struct {
 	context  context.Context
 	cancel   context.CancelFunc
-	running  sync.Map
+	running  Running
 	queue    sync.Pool
 	autoStop *atomic.Bool
 	Limit    int
@@ -38,60 +44,89 @@ var DefaultLimit = 3
 // PoolMessage ...
 type PoolMessage map[string][]byte
 
-// AddTaskMessage ...
-func AddTaskMessage(s string) error {
-	messages, e := LoadTaskMessage()
-	if e != nil {
-		return e
+// Add ...
+func (r *Running) Add(s string) {
+	r.waiting.Store(s, nil)
+	if err := r.cache(); err != nil {
+		log.Error(err)
 	}
-	messages[s] = nil
-	bytes, e := json.Marshal(messages)
-	if e != nil {
-		return Wrap(e)
-	}
-	return Wrap(cacher.Set("task", bytes))
 }
 
-// DeleteTaskMessage ...
-func DeleteTaskMessage(s string) error {
-	messages, e := LoadTaskMessage()
-	if e != nil {
-		return Wrap(e)
+// Delete ...
+func (r *Running) Delete(s string) {
+	r.waiting.Delete(s)
+	if err := r.cache(); err != nil {
+		log.Error(err)
 	}
-	delete(messages, s)
-	bytes, e := json.Marshal(messages)
-	if e != nil {
-		return Wrap(e)
-	}
-	return Wrap(cacher.Set("task", bytes))
 }
 
-// LoadTaskMessage ...
-func LoadTaskMessage() (PoolMessage, error) {
-	b, e := cacher.Has("task")
+// Running ...
+func (r *Running) Running(s string) (b bool) {
+	_, b = r.running.LoadOrStore(s, nil)
+	return
+}
+
+// Finish ...
+func (r *Running) Finish(s string) {
+	r.running.Delete(s)
+}
+
+// Has ...
+func (r *Running) Has(s string) (b bool) {
+	_, b = r.running.Load(s)
+	return
+}
+
+// List ...
+func (r *Running) List() []string {
+	var runs []string
+	r.running.Range(func(key, value interface{}) bool {
+		if v, b := key.(string); b {
+			runs = append(runs, v)
+		}
+		return true
+	})
+	return runs
+}
+
+// Restore ...
+func (r *Running) Restore() ([]string, error) {
+	bytes, e := cacher.Get("running")
 	if e != nil {
-		return nil, Wrap(e)
+		return nil, e
 	}
-	msg := make(PoolMessage)
-	if b {
-		bytes, e := cacher.Get("task")
-		if e != nil {
-			return nil, Wrap(e)
+	var runs []string
+	e = json.Unmarshal(bytes, &runs)
+	if e != nil {
+		return nil, e
+	}
+	for _, run := range runs {
+		work, err := LoadWork(run)
+		if err != nil {
+			return nil, err
 		}
-		e = json.Unmarshal(bytes, &msg)
-		if e != nil {
-			return nil, Wrap(e)
+		err = work.Reset()
+		if err != nil {
+			return nil, err
 		}
 	}
-	return msg, nil
+	return runs, nil
+}
+
+func (r *Running) cache() error {
+	bytes, e := json.Marshal(r.List())
+	if e != nil {
+		return Wrap(e)
+	}
+	return Wrap(cacher.Set("running", bytes))
 }
 
 // AddWorker ...
-func (t *Task) AddWorker(work IWork) error {
+func (t *Task) AddWorker(work IWork, force bool) error {
 	log.With("id", work.ID()).Info("add work")
 	iwork, e := LoadWork(work.ID())
 	if e == nil {
-		if iwork.Status() == WorkStopped {
+		if force || iwork.Status() == WorkStopped {
 			if err := iwork.Reset(); err != nil {
 				return Wrap(err)
 			}
@@ -100,10 +135,7 @@ func (t *Task) AddWorker(work IWork) error {
 	if err := work.Store(); err != nil {
 		return err
 	}
-	e = AddTaskMessage(work.ID())
-	if e != nil {
-		return Wrap(e)
-	}
+
 	t.queue.Put(work.ID())
 	return nil
 }
@@ -117,7 +149,7 @@ func (t *Task) Stop() {
 
 // restore ...
 func (t *Task) restore() error {
-	ss, e := LoadTaskMessage()
+	ss, e := t.running.Restore()
 	if e != nil {
 		return Wrap(e)
 	}
