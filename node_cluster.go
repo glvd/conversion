@@ -3,10 +3,12 @@ package conversion
 import (
 	"context"
 	"fmt"
+	"os"
 	"sync"
 
 	api "github.com/glvd/cluster-api"
 	"github.com/ipfs/go-cid"
+	files "github.com/ipfs/go-ipfs-files"
 	"github.com/multiformats/go-multiaddr"
 )
 
@@ -104,16 +106,16 @@ func (c *clusterNode) AddFile(ctx context.Context, filename string) (s string, e
 
 // AddDir ...
 func (c *clusterNode) AddDir(ctx context.Context, dir string) (s string, e error) {
-	//stat, err := os.Lstat(dir)
-	//if err != nil {
-	//	return "", err
-	//}
+	stat, err := os.Lstat(dir)
+	if err != nil {
+		return "", err
+	}
 
-	//sf, err := files.NewSerialFile(dir, false, stat)
-	//if err != nil {
-	//	return "", err
-	//}
-	//d := files.NewMapDirectory(map[string]files.Node{"": sf}) // unwrapped on the other side
+	sf, err := files.NewSerialFile(dir, false, stat)
+	if err != nil {
+		return "", err
+	}
+	d := files.NewMapDirectory(map[string]files.Node{"": sf}) // unwrapped on the other side
 
 	out := make(chan *api.AddedOutput)
 	wg := sync.WaitGroup{}
@@ -122,7 +124,7 @@ func (c *clusterNode) AddDir(ctx context.Context, dir string) (s string, e error
 		defer wg.Done()
 		p := c.params()
 		p.Recursive = true
-		err := c.client.Add(ctx, []string{dir}, &p, out)
+		err := c.client.AddMultiFile(ctx, files.NewMultiFileReader(d, false), &p, out)
 		if err != nil {
 			e = err
 			return

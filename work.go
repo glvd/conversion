@@ -336,7 +336,6 @@ func (w *Work) Run(ctx context.Context) (e error) {
 					return Wrap(e)
 				}
 				video.M3U8Hash = s
-				//AddHash(s)
 			}
 			return nil
 		}); err != nil {
@@ -356,7 +355,7 @@ func (w *Work) Run(ctx context.Context) (e error) {
 			return err
 		}
 		if err := w.CheckStop(func() error {
-			if !ExistVerifyString("thumb", w.Skip...) && w.PosterPath != "" {
+			if !ExistVerifyString("thumb", w.Skip...) && w.ThumbPath != "" {
 				s, e := globalNode.AddFile(ctx, w.ThumbPath)
 				if e != nil {
 					return Wrap(e)
