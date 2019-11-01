@@ -164,8 +164,8 @@ func (t *Task) restore() error {
 	if e != nil {
 		return Wrap(e)
 	}
-	for k := range ss {
-		t.addQueue(k)
+	for _, v := range ss {
+		t.addQueue(v)
 	}
 	return nil
 }
