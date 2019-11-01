@@ -6,6 +6,7 @@ import (
 
 	_ "github.com/gocacher/badger-cache/easy"
 	"github.com/gotrait/tool"
+	"github.com/syndtr/goleveldb/leveldb/errors"
 )
 
 // TestTask_Start ...
@@ -48,4 +49,9 @@ func TestTask_Start(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
+}
+
+// TestWrap ...
+func TestWrap(t *testing.T) {
+	t.Log(Wrap(errors.New("err")))
 }

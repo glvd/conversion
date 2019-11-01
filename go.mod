@@ -17,6 +17,7 @@ require (
 	github.com/ipfs/interface-go-ipfs-core v0.2.3
 	github.com/mattn/go-sqlite3 v1.11.0
 	github.com/multiformats/go-multiaddr v0.1.1
+	github.com/syndtr/goleveldb v1.0.0
 	github.com/xormsharp/xorm v1.0.0
 	go.uber.org/atomic v1.4.0
 )

@@ -298,11 +298,11 @@ func (w *Work) Run(ctx context.Context) (e error) {
 	defer w.cancel()
 	w.WorkImpl.Status = WorkRunning
 	if err := w.Update(); err != nil {
-		return Wrap(err)
+		return Wrap(err, "run update")
 	}
 	v, e := w.video()
 	if e != nil {
-		return Wrap(e)
+		return Wrap(e, "run video")
 	}
 	for _, path := range w.VideoPaths {
 		if path == "" {
@@ -316,7 +316,7 @@ func (w *Work) Run(ctx context.Context) (e error) {
 			if !ExistVerifyString("source", w.Skip...) {
 				s, e := globalNode.AddFile(ctx, path)
 				if e != nil {
-					return Wrap(e)
+					return Wrap(e, "add source")
 				}
 				video.SourceHash = s
 			}
@@ -329,11 +329,11 @@ func (w *Work) Run(ctx context.Context) (e error) {
 			if !ExistVerifyString("slice", w.Skip...) {
 				f, e := w.slice(ctx, path)
 				if e != nil {
-					return Wrap(e)
+					return Wrap(e, "run slice")
 				}
 				s, e := globalNode.AddDir(ctx, f.Output())
 				if e != nil {
-					return Wrap(e)
+					return Wrap(e, "add slice")
 				}
 				video.M3U8Hash = s
 			}
@@ -346,7 +346,7 @@ func (w *Work) Run(ctx context.Context) (e error) {
 			if !ExistVerifyString("poster", w.Skip...) && w.PosterPath != "" {
 				s, e := globalNode.AddFile(ctx, w.PosterPath)
 				if e != nil {
-					return Wrap(e)
+					return Wrap(e, "add poster")
 				}
 				video.PosterHash = s
 			}
@@ -358,7 +358,7 @@ func (w *Work) Run(ctx context.Context) (e error) {
 			if !ExistVerifyString("thumb", w.Skip...) && w.ThumbPath != "" {
 				s, e := globalNode.AddFile(ctx, w.ThumbPath)
 				if e != nil {
-					return Wrap(e)
+					return Wrap(e, "add thumb")
 				}
 				video.ThumbHash = s
 			}
@@ -377,7 +377,7 @@ func (w *Work) Run(ctx context.Context) (e error) {
 	}
 
 	w.WorkImpl.Status = WorkFinish
-	return Wrap(w.Update())
+	return Wrap(w.Update(), "finished")
 }
 
 // GetFiles ...
@@ -501,9 +501,12 @@ func LastSplit(s, sep string) string {
 }
 
 // Wrap ...
-func Wrap(err error) error {
+func Wrap(err error, msg ...string) error {
 	if err == nil {
 		return nil
+	}
+	if msg != nil {
+		return fmt.Errorf("%s:%w", strings.Join(msg, ""), err)
 	}
 	return fmt.Errorf("%w", err)
 }
