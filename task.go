@@ -89,6 +89,12 @@ func (r *Running) Has(s string) (b bool) {
 	return
 }
 
+// IsRunning ...
+func (r *Running) IsRunning(s string) (b bool) {
+	_, b = r.running.Load(s)
+	return
+}
+
 // List ...
 func (r *Running) List() []string {
 	var runs []string
