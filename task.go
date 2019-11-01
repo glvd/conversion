@@ -291,8 +291,13 @@ func (t *Task) StartWork(id string) error {
 			return Wrap(err)
 		}
 	}
-	t.queue.Put(iwork.ID())
+	t.addQueue(iwork)
 	return nil
+}
+
+func (t *Task) addQueue(work IWork) {
+	t.running.Add(work.ID())
+	t.queue.Put(work.ID())
 }
 
 // StopWork ...
