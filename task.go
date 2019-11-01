@@ -165,7 +165,7 @@ func (t *Task) restore() error {
 		return Wrap(e)
 	}
 	for k := range ss {
-		t.queue.Put(k)
+		t.addQueue(k)
 	}
 	return nil
 }
@@ -197,7 +197,6 @@ func (t *Task) Start() error {
 					return
 				default:
 				}
-
 				if v := t.queue.Get(); v != nil {
 					if s, b := v.(string); b {
 						work, e := LoadWork(s)
@@ -208,7 +207,7 @@ func (t *Task) Start() error {
 
 						if t.running.Running(work) {
 							log.With("id", work.ID()).Warn("work was running")
-							return
+							continue
 						}
 
 						//move to add
@@ -291,13 +290,13 @@ func (t *Task) StartWork(id string) error {
 			return Wrap(err)
 		}
 	}
-	t.addQueue(iwork)
+	t.addQueue(iwork.ID())
 	return nil
 }
 
-func (t *Task) addQueue(work IWork) {
-	t.running.Add(work.ID())
-	t.queue.Put(work.ID())
+func (t *Task) addQueue(id string) {
+	t.running.Add(id)
+	t.queue.Put(id)
 }
 
 // StopWork ...
