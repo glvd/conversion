@@ -180,7 +180,8 @@ func (t *Task) Start() error {
 	}
 
 	if err := t.restore(); err != nil {
-		return Wrap(err)
+		//ignore restore:first error key not found
+		log.Warnw("if not your first run,this has some problems", "error", err)
 	}
 
 	wg := sync.WaitGroup{}
