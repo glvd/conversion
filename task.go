@@ -14,8 +14,8 @@ import (
 
 // Running ...
 type Running struct {
-	running sync.Map
-	waiting sync.Map
+	running *sync.Map
+	queuing *sync.Map
 }
 
 // Task ...
@@ -41,12 +41,9 @@ func (t *Task) SetAutoStop(autoStop bool) {
 // DefaultLimit ...
 var DefaultLimit = 3
 
-// PoolMessage ...
-type PoolMessage map[string][]byte
-
 // Add ...
 func (r *Running) Add(s string) {
-	r.waiting.Store(s, nil)
+	r.queuing.Store(s, nil)
 	if err := r.cache(); err != nil {
 		log.Error(err)
 	}
@@ -54,33 +51,47 @@ func (r *Running) Add(s string) {
 
 // Delete ...
 func (r *Running) Delete(s string) {
-	r.waiting.Delete(s)
+	r.queuing.Delete(s)
 	if err := r.cache(); err != nil {
 		log.Error(err)
 	}
 }
 
 // Running ...
-func (r *Running) Running(s string) (b bool) {
-	_, b = r.running.LoadOrStore(s, nil)
+func (r *Running) Running(work IWork) (b bool) {
+	_, b = r.running.LoadOrStore(work.ID(), work)
 	return
+}
+
+// Stop ...
+func (r *Running) Stop(id string) {
+	if v, b := r.running.Load(id); b {
+		if work, b := v.(IWork); b {
+			if e := work.Stop(); e != nil {
+				log.Error(e)
+			} else {
+				return
+			}
+		}
+	}
 }
 
 // Finish ...
 func (r *Running) Finish(s string) {
 	r.running.Delete(s)
+	r.Delete(s)
 }
 
 // Has ...
 func (r *Running) Has(s string) (b bool) {
-	_, b = r.running.Load(s)
+	_, b = r.queuing.Load(s)
 	return
 }
 
 // List ...
 func (r *Running) List() []string {
 	var runs []string
-	r.running.Range(func(key, value interface{}) bool {
+	r.queuing.Range(func(key, value interface{}) bool {
 		if v, b := key.(string); b {
 			runs = append(runs, v)
 		}
@@ -126,18 +137,14 @@ func (t *Task) AddWorker(work IWork, force bool) error {
 	log.With("id", work.ID()).Info("add work")
 	iwork, e := LoadWork(work.ID())
 	if e == nil {
-		if force || iwork.Status() == WorkStopped {
+		if force {
 			if err := iwork.Reset(); err != nil {
-				return Wrap(err)
+				return err
 			}
 		}
+		return nil
 	}
-	if err := work.Store(); err != nil {
-		return err
-	}
-
-	t.queue.Put(work.ID())
-	return nil
+	return work.Store()
 }
 
 // Stop ...
@@ -157,17 +164,6 @@ func (t *Task) restore() error {
 		t.queue.Put(k)
 	}
 	return nil
-}
-
-// Running ...
-func (t *Task) Running(work IWork) (b bool) {
-	_, b = t.running.LoadOrStore(work.ID(), nil)
-	return
-}
-
-// Finish ...
-func (t *Task) Finish(id string) {
-	t.running.Delete(id)
 }
 
 // Start ...
@@ -205,7 +201,7 @@ func (t *Task) Start() error {
 							continue
 						}
 
-						if t.Running(work) {
+						if t.running.Running(work) {
 							log.With("id", work.ID()).Warn("work was running")
 							return
 						}
@@ -244,18 +240,14 @@ func (t *Task) Start() error {
 							}
 						}
 						log.With("id", work.ID()).Info("end run")
-						e = DeleteTaskMessage(work.ID())
-						if e != nil {
-							log.With("id", work.ID(), "error", e).Error("before run")
-						}
-						t.Finish(work.ID())
+						t.running.Finish(work.ID())
 					}
 					continue
 				}
 				if t.AutoStop() {
 					break WorkEnd
 				}
-				//service waiting for new Work
+				//service queuing for new Work
 				time.Sleep(30 * time.Second)
 			}
 		}(&wg)
@@ -271,7 +263,7 @@ func (t *Task) GetWorkStatus(id string) (WorkStatus, error) {
 	if e != nil {
 		return WorkAbnormal, fmt.Errorf("get status:%w", e)
 	}
-	_, ok := t.running.Load(work.ID())
+	ok := t.running.Has(work.ID())
 	if !ok && work.Status() == WorkRunning {
 		return WorkWaiting, nil
 	}
@@ -289,26 +281,26 @@ func (t *Task) StartWork(id string) error {
 	if e != nil {
 		return Wrap(e)
 	}
-	if err := iwork.Reset(); err != nil {
-		return Wrap(err)
+	if iwork.Status() == WorkStopped {
+		if err := iwork.Reset(); err != nil {
+			return Wrap(err)
+		}
 	}
-	if err := t.AddWorker(iwork); err != nil {
-		return Wrap(err)
-	}
+
+	//if err := t.AddWorker(iwork, true); err != nil {
+	//	return Wrap(err)
+	//}
+
+	t.queue.Put(iwork.ID())
 	return nil
 }
 
 // StopWork ...
 func (t *Task) StopWork(id string) {
-	if value, ok := t.running.Load(id); ok {
-		if work, b := value.(IWork); b {
-			if e := work.Stop(); e != nil {
-				log.Error(e)
-			} else {
-				return
-			}
-		}
-	}
+	//stop running
+	t.running.Stop(id)
+
+	//change stop status
 	iwork, err := LoadWork(id)
 	if err == nil {
 		if e := iwork.Stop(); e != nil {
@@ -323,25 +315,26 @@ func (t *Task) StopWork(id string) {
 
 // AllRun ...
 func (t *Task) AllRun() (works []IWork, e error) {
-	t.running.Range(func(key, value interface{}) bool {
-		iwork, err := LoadWork(key.(string))
+	for _, v := range t.running.List() {
+		iwork, err := LoadWork(v)
 		if err != nil {
-			e = Wrap(err)
-			return false
+			return nil, err
 		}
 		works = append(works, iwork)
-		return true
-	})
-	return
+	}
+	return works, nil
 }
 
 // NewTask ...
 func NewTask() *Task {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Task{
-		context:  ctx,
-		cancel:   cancel,
-		running:  sync.Map{},
+		context: ctx,
+		cancel:  cancel,
+		running: Running{
+			running: &sync.Map{},
+			queuing: &sync.Map{},
+		},
 		queue:    sync.Pool{},
 		autoStop: atomic.NewBool(true),
 		Limit:    DefaultLimit,
