@@ -30,7 +30,7 @@ func TestTask_Start(t *testing.T) {
 		if e1 != nil {
 			t.Fatal(e1)
 		}
-		e = task.AddWorker(v1)
+		e = task.AddWorker(v1, false)
 		if e != nil {
 			t.Fatal(e)
 		}
