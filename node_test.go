@@ -4,9 +4,6 @@ import (
 	"context"
 	"testing"
 	"time"
-
-	api "github.com/glvd/cluster-api"
-	"github.com/multiformats/go-multiaddr"
 )
 
 func init() {
@@ -45,14 +42,7 @@ func TestNewSingleNode(t *testing.T) {
 
 // TestNodeID ...
 func TestNewClusterNode(t *testing.T) {
-	a, err := multiaddr.NewMultiaddr("/ip4/127.0.0.1/tcp/9094")
-	if err != nil {
-		t.Fatal(err)
-	}
-	node := NewClusterNode(&api.Config{
-		APIAddr:           a,
-		DisableKeepAlives: true,
-	})
+	node := NewClusterNode("/ip4/127.0.0.1/tcp/9094")
 
 	s, err := node.AddDir(context.Background(), "D:\\temp\\ca7946ec-eeb6-4a03-a2d2-e47ab343a934")
 	if err != nil {

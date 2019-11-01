@@ -4,11 +4,13 @@ import (
 	"testing"
 	"time"
 
+	_ "github.com/gocacher/badger-cache/easy"
 	"github.com/gotrait/tool"
 )
 
 // TestTask_Start ...
 func TestTask_Start(t *testing.T) {
+
 	task := NewTask()
 	for i := 0; i < 5; i++ {
 		id := tool.GenerateRandomString(5)
@@ -19,7 +21,7 @@ func TestTask_Start(t *testing.T) {
 		if e != nil {
 			t.Fatal(e)
 		}
-		e = task.AddWorker(v)
+		e = task.AddWorker(v, false)
 		if e != nil {
 			t.Fatal(e)
 		}
