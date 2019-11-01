@@ -144,7 +144,11 @@ func (t *Task) AddWorker(work IWork, force bool) error {
 		}
 		return nil
 	}
-	return work.Store()
+	if err := work.Store(); err != nil {
+		return err
+	}
+
+	return t.StartWork(work.ID())
 }
 
 // Stop ...
@@ -286,11 +290,6 @@ func (t *Task) StartWork(id string) error {
 			return Wrap(err)
 		}
 	}
-
-	//if err := t.AddWorker(iwork, true); err != nil {
-	//	return Wrap(err)
-	//}
-
 	t.queue.Put(iwork.ID())
 	return nil
 }
