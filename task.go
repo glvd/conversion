@@ -26,6 +26,7 @@ type Task struct {
 	queue    sync.Pool
 	autoStop *atomic.Bool
 	Limit    int
+	Interval int
 }
 
 // AutoStop ...
@@ -142,12 +143,11 @@ func (t *Task) AddWorker(work IWork, force bool) error {
 				return err
 			}
 		}
-		return nil
+		return t.StartWork(work.ID())
 	}
 	if err := work.Store(); err != nil {
 		return err
 	}
-
 	return t.StartWork(work.ID())
 }
 
@@ -253,7 +253,7 @@ func (t *Task) Start() error {
 					break WorkEnd
 				}
 				//service queuing for new Work
-				time.Sleep(30 * time.Second)
+				time.Sleep(5 * time.Second)
 			}
 		}(&wg)
 	}
