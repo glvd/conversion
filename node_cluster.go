@@ -124,6 +124,7 @@ func (c *clusterNode) AddDir(ctx context.Context, dir string) (s string, e error
 		defer wg.Done()
 		p := c.params()
 		p.Recursive = true
+		log.Infow("add dir", "param", p.ToQueryString())
 		err := c.client.AddMultiFile(ctx, files.NewMultiFileReader(d, false), &p, out)
 		if err != nil {
 			e = err
