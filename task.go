@@ -75,6 +75,7 @@ func (r *Running) Stop(id string) {
 			}
 		}
 	}
+	r.Delete(id)
 }
 
 // Finish ...
