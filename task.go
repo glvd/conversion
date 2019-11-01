@@ -129,7 +129,7 @@ func (t *Task) restore() error {
 
 // Running ...
 func (t *Task) Running(work IWork) (b bool) {
-	_, b = t.running.LoadOrStore(work.ID(), work)
+	_, b = t.running.LoadOrStore(work.ID(), nil)
 	return
 }
 
@@ -172,14 +172,20 @@ func (t *Task) Start() error {
 							log.With("id", s, "error", e).Error("load work")
 							continue
 						}
-						if work.Status() == WorkRunning {
-							t.Running(work)
-							e := work.Reset()
-							if e != nil {
-								log.With("id", work.ID(), "error", e).Error("reset")
-								continue
-							}
+
+						if t.Running(work) {
+							log.With("id", work.ID()).Warn("work was running")
+							return
 						}
+
+						//move to add
+						//if work.Status() == WorkRunning {
+						//	e := work.Reset()
+						//	if e != nil {
+						//		log.With("id", work.ID(), "error", e).Error("reset")
+						//		continue
+						//	}
+						//}
 						switch work.Status() {
 						case WorkWaiting:
 							log.With("id", work.ID()).Info("work run")
