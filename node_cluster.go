@@ -50,6 +50,10 @@ func NewClusterNode(addr string) Node {
 	return node
 }
 
+func (c *clusterNode) params() api.AddParams {
+	return *c.addParam
+}
+
 // Type ...
 func (c *clusterNode) Type() string {
 	return NodeTypeCluster
@@ -85,7 +89,8 @@ func (c *clusterNode) AddFile(ctx context.Context, filename string) (s string, e
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		err := c.client.Add(ctx, []string{filename}, c.addParam, out)
+		p := c.params()
+		err := c.client.Add(ctx, []string{filename}, &p, out)
 		if err != nil {
 			e = err
 			return
@@ -117,7 +122,9 @@ func (c *clusterNode) AddDir(ctx context.Context, dir string) (s string, e error
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		err := c.client.AddMultiFile(ctx, files.NewMultiFileReader(d, false), c.addParam, out)
+		p := c.params()
+		p.Recursive = true
+		err := c.client.AddMultiFile(ctx, files.NewMultiFileReader(d, false), &p, out)
 		if err != nil {
 			e = err
 			return
