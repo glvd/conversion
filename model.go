@@ -34,6 +34,7 @@ type dbConfig struct {
 	showSQL      bool
 	showExecTime bool
 	useCache     bool
+	create       bool
 	dbType       string
 	addr         string
 	username     string
@@ -104,6 +105,25 @@ func LoginOption(addr, user, pass string) ConfigOptions {
 		config.username = user
 		config.password = pass
 	}
+}
+
+// CreateDatabaseOption ...
+func CreateDatabaseOption() ConfigOptions {
+	return func(config *dbConfig) {
+		config.create = true
+	}
+}
+
+// DBType ...
+func DBType(p string) ConfigOptions {
+	return func(config *dbConfig) {
+		config.dbType = p
+	}
+}
+
+// MakeDatabaseInstance ...
+func MakeDatabaseInstance(options ...ConfigOptions) (*xorm.Engine, error) {
+
 }
 
 // InitMySQL ...
