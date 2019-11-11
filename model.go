@@ -123,7 +123,58 @@ func DBType(p string) ConfigOptions {
 
 // MakeDatabaseInstance ...
 func MakeDatabaseInstance(options ...ConfigOptions) (*xorm.Engine, error) {
+	config := &dbConfig{
+		showSQL:  true,
+		useCache: true,
+		dbType:   "mysql",
+		addr:     "localhost",
+		username: "root",
+		password: "111111",
+		schema:   "glvd",
+		location: url.QueryEscape("Asia/Shanghai"),
+		charset:  "utf8mb4",
+		prefix:   "",
+	}
+	for _, option := range options {
+		option(config)
+	}
 
+	if config.dbType == "mysql" {
+		return initMysql(*config)
+	}
+	return initSQLite3(*config)
+}
+
+func initSQLite3(config dbConfig) (*xorm.Engine, error) {
+	engine, e := xorm.NewEngine(config.dbType, liteSource(config.schema+".db"))
+	if e != nil {
+		return nil, e
+	}
+
+	return engine, nil
+}
+
+func initMysql(config dbConfig) (*xorm.Engine, error) {
+	if config.create {
+		dbEngine, e := xorm.NewEngine(config.dbType, config.dbSource())
+		if e != nil {
+			return nil, e
+		}
+		defer dbEngine.Close()
+
+		sql := fmt.Sprintf(createDatabase, config.schema)
+
+		_, e = dbEngine.DB().Exec(sql)
+		if e == nil {
+			log.Infow("create database", "database", config.schema)
+		}
+	}
+	engine, e := xorm.NewEngine(config.dbType, config.source())
+	if e != nil {
+		return nil, e
+	}
+
+	return engine, nil
 }
 
 // InitMySQL ...
