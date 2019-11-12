@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"io"
 	"os"
 )
@@ -45,6 +46,20 @@ type Video struct {
 
 func init() {
 	registerTable(&Video{})
+}
+
+// MarshalJSONVersion ...
+func (v Video) MarshalJSONVersion() (string, string, error) {
+	bys, e := json.Marshal(v)
+	if e != nil {
+		return "", "", e
+	}
+	return string(bys), v.Version(), nil
+}
+
+// Version ...
+func (v Video) Version() string {
+	return "v0.0.1"
 }
 
 // BeforeInsert ...
