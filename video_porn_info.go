@@ -59,7 +59,7 @@ func (v VideoPornInfo) Video() *Video {
 
 	return &Video{
 		Model:        Model{},
-		BanNo:        v.ID,
+		No:           v.ID,
 		Intro:        v.Title,
 		Alias:        nil,
 		ThumbHash:    "",

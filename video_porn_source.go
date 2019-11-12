@@ -104,7 +104,7 @@ func (v VideoPornSource) Video() *Video {
 
 	return &Video{
 		Model:      Model{},
-		BanNo:      strings.ToUpper(v.Bangumi),
+		No:         strings.ToUpper(v.Bangumi),
 		Intro:      intro,
 		Alias:      v.Alias,
 		ThumbHash:  "",

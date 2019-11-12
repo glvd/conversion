@@ -12,7 +12,7 @@ import (
 // Video ...
 type Video struct {
 	Model        `xorm:"extends" json:"-"`
-	BanNo        string   `xorm:"ban_no" json:"ban_no"`               //番号
+	No           string   `xorm:"no" json:"no"`                       //编号
 	Intro        string   `xorm:"varchar(2048)" json:"intro"`         //简介
 	Alias        []string `xorm:"json" json:"alias"`                  //别名，片名
 	ThumbHash    string   `xorm:"thumb_hash" json:"thumb_hash"`       //缩略图
