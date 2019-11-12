@@ -49,16 +49,16 @@ func init() {
 }
 
 // MarshalJSONVersion ...
-func (v Video) MarshalJSONVersion() (string, string, error) {
+func (v Video) MarshalJSONVersion() (string, error) {
 	bys, e := json.Marshal(v)
 	if e != nil {
-		return "", "", e
+		return "", e
 	}
-	return string(bys), v.Version(), nil
+	return string(bys), nil
 }
 
 // Version ...
-func (v Video) Version() string {
+func (v Video) JSONVersion() string {
 	return "v0.0.1"
 }
 
