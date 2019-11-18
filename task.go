@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gocacher/cacher"
+	"github.com/syndtr/goleveldb/leveldb/cache"
 	"go.uber.org/atomic"
 )
 
@@ -20,6 +21,7 @@ type Running struct {
 
 // Queue ...
 type Queue struct {
+	cache   cache.Cache
 	queuing sync.Map
 	tasking sync.Pool
 	running sync.Map
@@ -52,6 +54,15 @@ var DefaultLimit = 3
 
 // Add ...
 func (r *Running) Add(s string) {
+	r.queuing.Store(s, nil)
+	if err := r.cache(); err != nil {
+		log.Error(err)
+	}
+}
+
+// Add ...
+func (q *Queue) Add(iwork IWork) {
+	q.queuing.Store(s, nil)
 	r.queuing.Store(s, nil)
 	if err := r.cache(); err != nil {
 		log.Error(err)

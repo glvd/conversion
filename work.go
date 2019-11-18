@@ -42,6 +42,7 @@ type WorkImpl struct {
 	Scale      Scale
 	Output     string
 	Skip       []string
+	ClearTemp  bool
 }
 
 // Work ...
@@ -141,6 +142,13 @@ func PosterPathOption(path string) WorkOptions {
 func SamplePathOption(path []string) WorkOptions {
 	return func(impl *WorkImpl) {
 		impl.SamplePath = path
+	}
+}
+
+// ClearTempOption ...
+func ClearTempOption(b bool) WorkOptions {
+	return func(impl *WorkImpl) {
+		impl.ClearTemp = b
 	}
 }
 
