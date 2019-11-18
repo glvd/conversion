@@ -18,6 +18,13 @@ type Running struct {
 	queuing *sync.Map
 }
 
+// Queue ...
+type Queue struct {
+	queuing sync.Map
+	tasking sync.Pool
+	running sync.Map
+}
+
 // Task ...
 type Task struct {
 	context   context.Context
