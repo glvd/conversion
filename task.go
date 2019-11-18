@@ -20,13 +20,14 @@ type Running struct {
 
 // Task ...
 type Task struct {
-	context  context.Context
-	cancel   context.CancelFunc
-	running  Running
-	queue    sync.Pool
-	autoStop *atomic.Bool
-	Limit    int
-	Interval int
+	context   context.Context
+	cancel    context.CancelFunc
+	running   Running
+	queue     sync.Pool
+	autoStop  *atomic.Bool
+	Limit     int
+	Interval  int
+	ClearTemp bool
 }
 
 // AutoStop ...
