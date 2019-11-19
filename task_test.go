@@ -9,9 +9,17 @@ import (
 	"github.com/syndtr/goleveldb/leveldb/errors"
 )
 
+func init() {
+	RegisterDatabase(MustDatabase(InitSQLite3("conv.db")))
+	e := SyncTable()
+	if e != nil {
+		panic(e)
+	}
+	RegisterCache()
+}
+
 // TestTask_Start ...
 func TestTask_Start(t *testing.T) {
-
 	task := NewTask()
 	for i := 0; i < 5; i++ {
 		id := tool.GenerateRandomString(5)

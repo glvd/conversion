@@ -6,14 +6,6 @@ import (
 	"github.com/xormsharp/xorm"
 )
 
-func init() {
-	RegisterDatabase(MustDatabase(InitMySQL()))
-	e := SyncTable()
-	if e != nil {
-		panic(e)
-	}
-}
-
 // TestInsertOrUpdate ...
 func TestInsertOrUpdate(t *testing.T) {
 	i, e := InsertOrUpdate(&Video{})
