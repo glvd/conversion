@@ -30,7 +30,7 @@ type Task struct {
 	context   context.Context
 	cancel    context.CancelFunc
 	running   Running
-	queue     sync.Pool
+	queue     *Queue
 	autoStop  *atomic.Bool
 	Limit     int
 	Interval  int
@@ -83,6 +83,19 @@ func (q *Queue) Delete(s string) {
 	}
 }
 
+// Get ...
+func (q *Queue) Get() (v string, b bool) {
+	if t := q.tasking.Get(); t != nil {
+		if v, b = t.(string); b {
+			if !q.Has(v) {
+				return "", false
+			}
+		}
+
+	}
+	return
+}
+
 // Has ...
 func (q *Queue) Has(s string) bool {
 	_, ok := q.queuing.Load(s)
@@ -92,6 +105,12 @@ func (q *Queue) Has(s string) bool {
 // Running ...
 func (r *Running) Running(work IWork) (b bool) {
 	_, b = r.running.LoadOrStore(work.ID(), work)
+	return
+}
+
+// Running ...
+func (q *Queue) Running(work IWork) (b bool) {
+	_, b = q.running.LoadOrStore(work.ID(), work)
 	return
 }
 
@@ -260,55 +279,45 @@ func (t *Task) Start() error {
 					return
 				default:
 				}
-				if v := t.queue.Get(); v != nil {
-					if s, b := v.(string); b {
-						work, e := LoadWork(s)
-						if e != nil {
-							log.With("id", s, "error", e).Error("load work")
-							continue
-						}
-
-						if t.running.Running(work) {
-							log.With("id", work.ID()).Warn("work was running")
-							continue
-						}
-
-						//move to add
-						//if work.Status() == WorkRunning {
-						//	e := work.Reset()
-						//	if e != nil {
-						//		log.With("id", work.ID(), "error", e).Error("reset")
-						//		continue
-						//	}
-						//}
-						switch work.Status() {
-						case WorkWaiting:
-							log.With("id", work.ID()).Info("work run")
-
-							e = work.Run(t.context)
-							if e != nil {
-								log.With("id", work.ID(), "error", e).Error("run")
-							}
-						case WorkStopped:
-							log.With("id", work.ID()).Info("work was stopped")
-							continue
-						case WorkRunning:
-							log.With("id", work.ID()).Warn("work was running")
-							continue
-						case WorkFinish:
-							log.With("id", work.ID()).Warn("work was finished")
-							continue
-						default:
-							log.With("id", work.ID()).Error("work status wrong")
-							e := work.Reset()
-							if e != nil {
-								log.With("id", work.ID(), "error", e).Error("fix status error")
-								return
-							}
-						}
-						log.With("id", work.ID()).Info("end run")
-						t.running.Finish(work.ID())
+				if v, b := t.queue.Get(); b {
+					work, e := LoadWork(v)
+					if e != nil {
+						log.With("id", v, "error", e).Error("load work")
+						continue
 					}
+
+					if t.queue.Running(work) {
+						log.With("id", work.ID()).Warn("work was running")
+						continue
+					}
+
+					switch work.Status() {
+					case WorkWaiting:
+						log.With("id", work.ID()).Info("work run")
+
+						e = work.Run(t.context)
+						if e != nil {
+							log.With("id", work.ID(), "error", e).Error("run")
+						}
+					case WorkStopped:
+						log.With("id", work.ID()).Info("work was stopped")
+						continue
+					case WorkRunning:
+						log.With("id", work.ID()).Warn("work was running")
+						continue
+					case WorkFinish:
+						log.With("id", work.ID()).Warn("work was finished")
+						continue
+					default:
+						log.With("id", work.ID()).Error("work status wrong")
+						e := work.Reset()
+						if e != nil {
+							log.With("id", work.ID(), "error", e).Error("fix status error")
+							return
+						}
+					}
+					log.With("id", work.ID()).Info("end run")
+					t.running.Finish(work.ID())
 					continue
 				}
 				if t.AutoStop() {
