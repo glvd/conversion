@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	cache "github.com/gocacher/badger-cache"
 	"github.com/gocacher/cacher"
 	"go.uber.org/atomic"
 )
@@ -137,7 +136,7 @@ func (q *Queue) List() []string {
 
 // Restore ...
 func (q *Queue) Restore() ([]string, error) {
-	bytes, e := cacher.Get("running")
+	bytes, e := q.cacher.Get("running")
 	if e != nil {
 		return nil, e
 	}
@@ -165,7 +164,7 @@ func (q *Queue) cache() error {
 	if e != nil {
 		return Wrap(e)
 	}
-	return Wrap(cacher.Set("running", bytes))
+	return Wrap(q.cacher.Set("running", bytes))
 }
 
 // AddWorker ...
@@ -361,7 +360,7 @@ func NewTask() *Task {
 	return &Task{
 		context:  ctx,
 		cancel:   cancel,
-		queue:    NewQueue(cache.NewBadgerCache(CachePath)),
+		queue:    NewQueue(_cache),
 		autoStop: atomic.NewBool(true),
 		Limit:    DefaultLimit,
 	}
