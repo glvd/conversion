@@ -1,9 +1,11 @@
 package conversion
 
 import (
-	"github.com/gocacher/badger-cache"
+	cache "github.com/gocacher/badger-cache"
 	"github.com/gocacher/cacher"
 )
+
+var _cache cacher.Cacher
 
 // CachePath ...
 var CachePath = cache.DefaultPath
@@ -15,5 +17,6 @@ func SetCachePath(path string) {
 
 // RegisterCache ...
 func RegisterCache() {
-	cacher.Register(cache.NewBadgerCache(CachePath))
+	_cache = cache.NewBadgerCache(CachePath)
+	cacher.Register(_cache)
 }

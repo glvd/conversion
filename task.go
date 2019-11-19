@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	cache "github.com/gocacher/badger-cache"
 	"github.com/gocacher/cacher"
 	"go.uber.org/atomic"
 )
@@ -20,6 +21,7 @@ type Running struct {
 
 // Queue ...
 type Queue struct {
+	cacher  cacher.Cacher
 	queuing *sync.Map
 	tasking *sync.Pool
 	running *sync.Map
@@ -55,6 +57,16 @@ func (r *Running) Add(s string) {
 	r.queuing.Store(s, nil)
 	if err := r.cache(); err != nil {
 		log.Error(err)
+	}
+}
+
+// NewQueue ...
+func NewQueue(c cacher.Cacher) *Queue {
+	return &Queue{
+		cacher:  c,
+		queuing: &sync.Map{},
+		tasking: &sync.Pool{},
+		running: &sync.Map{},
 	}
 }
 
@@ -194,6 +206,29 @@ func (r *Running) Restore() ([]string, error) {
 	return runs, nil
 }
 
+// Restore ...
+func (q *Queue) Restore() ([]string, error) {
+	bytes, e := cacher.Get("running")
+	if e != nil {
+		return nil, e
+	}
+	var runs []string
+	e = json.Unmarshal(bytes, &runs)
+	if e != nil {
+		return nil, e
+	}
+	for _, run := range runs {
+		work, err := LoadWork(run)
+		if err != nil {
+			return nil, err
+		}
+		err = work.Reset()
+		if err != nil {
+			return nil, err
+		}
+	}
+	return runs, nil
+}
 func (r *Running) cache() error {
 	bytes, e := json.Marshal(r.List())
 	if e != nil {
@@ -241,12 +276,12 @@ func (t *Task) Stop() {
 
 // restore ...
 func (t *Task) restore() error {
-	ss, e := t.running.Restore()
+	ss, e := t.queue.Restore()
 	if e != nil {
 		return Wrap(e)
 	}
 	for _, v := range ss {
-		t.addQueue(v)
+		t.queue.Add(v)
 	}
 	return nil
 }
@@ -363,13 +398,8 @@ func (t *Task) StartWork(id string) error {
 			return Wrap(err)
 		}
 	}
-	t.addQueue(iwork.ID())
+	t.queue.Add(iwork.ID())
 	return nil
-}
-
-func (t *Task) addQueue(id string) {
-	t.running.Add(id)
-	t.queue.Put(id)
 }
 
 // StopWork ...
@@ -406,13 +436,9 @@ func (t *Task) AllRun() (works []IWork, e error) {
 func NewTask() *Task {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Task{
-		context: ctx,
-		cancel:  cancel,
-		running: Running{
-			running: &sync.Map{},
-			queuing: &sync.Map{},
-		},
-		queue:    sync.Pool{},
+		context:  ctx,
+		cancel:   cancel,
+		queue:    NewQueue(cache.NewBadgerCache(CachePath)),
 		autoStop: atomic.NewBool(true),
 		Limit:    DefaultLimit,
 	}
