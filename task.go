@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/gocacher/cacher"
-	"github.com/syndtr/goleveldb/leveldb/cache"
 	"go.uber.org/atomic"
 )
 
@@ -21,10 +20,9 @@ type Running struct {
 
 // Queue ...
 type Queue struct {
-	cache   cache.Cache
-	queuing sync.Map
-	tasking sync.Pool
-	running sync.Map
+	queuing *sync.Map
+	tasking *sync.Pool
+	running *sync.Map
 }
 
 // Task ...
@@ -61,12 +59,12 @@ func (r *Running) Add(s string) {
 }
 
 // Add ...
-func (q *Queue) Add(iwork IWork) {
+func (q *Queue) Add(s string) {
 	q.queuing.Store(s, nil)
-	r.queuing.Store(s, nil)
-	if err := r.cache(); err != nil {
+	if err := q.cache(); err != nil {
 		log.Error(err)
 	}
+	q.tasking.Put(s)
 }
 
 // Delete ...
@@ -75,6 +73,20 @@ func (r *Running) Delete(s string) {
 	if err := r.cache(); err != nil {
 		log.Error(err)
 	}
+}
+
+// Delete ...
+func (q *Queue) Delete(s string) {
+	q.queuing.Delete(s)
+	if err := q.cache(); err != nil {
+		log.Error(err)
+	}
+}
+
+// Has ...
+func (q *Queue) Has(s string) bool {
+	_, ok := q.queuing.Load(s)
+	return ok
 }
 
 // Running ...
@@ -127,6 +139,18 @@ func (r *Running) List() []string {
 	return runs
 }
 
+// List ...
+func (q *Queue) List() []string {
+	var runs []string
+	q.queuing.Range(func(key, value interface{}) bool {
+		if v, b := key.(string); b {
+			runs = append(runs, v)
+		}
+		return true
+	})
+	return runs
+}
+
 // Restore ...
 func (r *Running) Restore() ([]string, error) {
 	bytes, e := cacher.Get("running")
@@ -159,6 +183,14 @@ func (r *Running) cache() error {
 	return Wrap(cacher.Set("running", bytes))
 }
 
+func (q *Queue) cache() error {
+	bytes, e := json.Marshal(q.List())
+	if e != nil {
+		return Wrap(e)
+	}
+	return Wrap(cacher.Set("running", bytes))
+}
+
 // AddWorker ...
 func (t *Task) AddWorker(work IWork, force bool) error {
 	log.With("id", work.ID()).Info("add work")
@@ -173,10 +205,10 @@ func (t *Task) AddWorker(work IWork, force bool) error {
 				return err
 			}
 		}
-		return t.StartWork(work.ID())
-	}
-	if err := work.Store(); err != nil {
-		return err
+	} else {
+		if err := work.Store(); err != nil {
+			return err
+		}
 	}
 	return t.StartWork(work.ID())
 }

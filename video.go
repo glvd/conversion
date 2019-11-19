@@ -57,7 +57,7 @@ func (v Video) MarshalJSONVersion() (string, error) {
 	return string(bys), nil
 }
 
-// Version ...
+// JSONVersion ...
 func (v Video) JSONVersion() string {
 	return "v0.0.1"
 }
