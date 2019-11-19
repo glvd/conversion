@@ -15,7 +15,7 @@ func init() {
 	if e != nil {
 		panic(e)
 	}
-	CachePath = "d:\\cache"
+	CachePath = "d:\\cache" //windows path test
 	RegisterCache()
 }
 
