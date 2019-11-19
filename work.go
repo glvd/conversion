@@ -168,6 +168,7 @@ func defaultWork(options ...WorkOptions) *WorkImpl {
 		Scale:      0,
 		Output:     os.TempDir(),
 		Skip:       nil,
+		ClearTemp:  true,
 	}
 	for _, opt := range options {
 		opt(impl)
