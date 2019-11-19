@@ -1,12 +1,12 @@
 package conversion
 
 import (
+	"errors"
 	"testing"
 	"time"
 
 	_ "github.com/gocacher/badger-cache/easy"
 	"github.com/gotrait/tool"
-	"github.com/syndtr/goleveldb/leveldb/errors"
 )
 
 func init() {
