@@ -5,13 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/glvd/go-fftool"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"unicode"
-
-	"github.com/glvd/split"
 
 	"github.com/gocacher/cacher"
 )
@@ -39,7 +38,7 @@ type WorkImpl struct {
 	PosterPath string
 	ThumbPath  string
 	SamplePath []string
-	Scale      Scale
+	Scale      fftool.Scale
 	Output     string
 	Skip       []string
 	ClearTemp  bool
@@ -188,27 +187,34 @@ func (w *Work) Status() WorkStatus {
 }
 
 func (w Work) slice(ctx context.Context, input string) (*Fragment, error) {
-	format, e := split.FFProbeStreamFormat(input)
+	format, e := _ffprobe.StreamFormat(input)
+	//format, e := split.FFProbeStreamFormat(input)
 	if e != nil {
 		return nil, Wrap(e)
 	}
 	if !IsMedia(format) {
 		return nil, errors.New("file is not a video/audio")
 	}
-	res := parseScale(int64(format.ResolutionInt()))
-	if res < w.Scale {
-		w.Scale = res
-	}
-	sharpness := strconv.FormatInt(formatScale(w.Scale), 10) + "P"
+	//res := parseScale(int64(format.ResolutionInt()))
+	//if res < w.Scale {
+	//	w.Scale = res
+	//}
 
+	sharpness := strconv.FormatInt(formatScale(w.Scale), 10) + "P"
+	ff := _ffmpeg.OptimizeWithFormat(format)
+
+	e = ff.Run(ctx, input)
+	if e != nil {
+		return nil, e
+	}
 	//Output := filepath.Join(w.Output, UUID().String())
-	sa, e := split.FFMpegSplitToM3U8(ctx, input, split.StreamFormatOption(format), split.ScaleOption(formatScale(w.Scale)), split.OutputOption(w.Output()), split.AutoOption(true))
+	//sa, e := split.FFMpegSplitToM3U8(ctx, input, split.StreamFormatOption(format), split.ScaleOption(formatScale(w.Scale)), split.OutputOption(w.Output()), split.AutoOption(true))
 	if e != nil {
 		return nil, Wrap(e)
 	}
 	return &Fragment{
 		scale:     w.Scale,
-		output:    sa.Output,
+		output:    ff.Config().ProcessPath(),
 		skip:      w.Skip,
 		input:     input,
 		sharpness: sharpness,

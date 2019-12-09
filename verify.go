@@ -1,11 +1,10 @@
 package conversion
 
 import (
+	"github.com/glvd/go-fftool"
 	"path"
 	"path/filepath"
 	"strings"
-
-	"github.com/glvd/split"
 )
 
 // IsPicture ...
@@ -23,7 +22,7 @@ func IsVideo(filename string) bool {
 }
 
 // IsMedia ...
-func IsMedia(format *split.StreamFormat) bool {
+func IsMedia(format *fftool.StreamFormat) bool {
 	video := format.Video()
 	audio := format.Audio()
 	if audio == nil || video == nil {
