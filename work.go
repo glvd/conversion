@@ -164,7 +164,7 @@ func defaultWork(options ...WorkOptions) *WorkImpl {
 		PosterPath: "",
 		ThumbPath:  "",
 		SamplePath: nil,
-		Scale:      0,
+		Scale:      fftool.Scale720P,
 		Output:     os.TempDir(),
 		Skip:       nil,
 		ClearTemp:  true,
