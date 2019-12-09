@@ -2,8 +2,6 @@ package conversion
 
 import "github.com/glvd/go-fftool"
 
-type Scale = fftool.Scale
-
 // FragmentOption ...
 type FragmentOption func(f *Fragment)
 

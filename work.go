@@ -48,6 +48,7 @@ type WorkImpl struct {
 type Work struct {
 	ctx    context.Context
 	cancel context.CancelFunc
+	config Config
 	*WorkImpl
 	WorkType string
 	Value    []byte
@@ -182,8 +183,12 @@ func (w *Work) Reset() error {
 }
 
 // Status ...
-func (w *Work) Status() WorkStatus {
+func (w Work) Status() WorkStatus {
 	return w.WorkImpl.Status
+}
+
+func (w Work) Config() Config {
+	return w.config
 }
 
 func (w Work) slice(ctx context.Context, input string) (*Fragment, error) {
@@ -195,10 +200,6 @@ func (w Work) slice(ctx context.Context, input string) (*Fragment, error) {
 	if !IsMedia(format) {
 		return nil, errors.New("file is not a video/audio")
 	}
-	//res := parseScale(int64(format.ResolutionInt()))
-	//if res < w.Scale {
-	//	w.Scale = res
-	//}
 
 	sharpness := fmt.Sprintf("%dP", fftool.ScaleValue(w.Scale))
 	ff := _ffmpeg.OptimizeWithFormat(format)

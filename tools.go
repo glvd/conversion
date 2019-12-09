@@ -4,11 +4,15 @@ import (
 	"github.com/glvd/go-fftool"
 )
 
-var _ffcfg = fftool.DefaultConfig()
-var _ffmpeg *fftool.FFMpeg
+type Scale = fftool.Scale
+type Config = fftool.Config
+
+var SliceConfig = fftool.DefaultConfig()
+
+//var _ffmpeg *fftool.FFMpeg
 var _ffprobe *fftool.FFProbe
 
-func init() {
-	_ffmpeg = fftool.NewFFMpeg(_ffcfg)
+func InitFFTool() {
+	//_ffmpeg = fftool.NewFFMpeg(SliceConfig)
 	_ffprobe = fftool.NewFFProbe()
 }
