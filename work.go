@@ -38,7 +38,7 @@ type WorkImpl struct {
 	PosterPath string
 	ThumbPath  string
 	SamplePath []string
-	Scale      fftool.Scale
+	Scale      Scale
 	Output     string
 	Skip       []string
 	ClearTemp  bool
@@ -200,7 +200,7 @@ func (w Work) slice(ctx context.Context, input string) (*Fragment, error) {
 	//	w.Scale = res
 	//}
 
-	sharpness := strconv.FormatInt(formatScale(w.Scale), 10) + "P"
+	sharpness := fmt.Sprintf("%dP", fftool.ScaleValue(w.Scale))
 	ff := _ffmpeg.OptimizeWithFormat(format)
 
 	e = ff.Run(ctx, input)

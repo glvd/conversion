@@ -1,16 +1,8 @@
 package conversion
 
-// Scale ...
-type Scale int64
+import "github.com/glvd/go-fftool"
 
-// HighScale ...
-const HighScale Scale = 1080
-
-// MiddleScale ...
-const MiddleScale Scale = 720
-
-// LowScale ...
-const LowScale Scale = 480
+type Scale = fftool.Scale
 
 // FragmentOption ...
 type FragmentOption func(f *Fragment)
@@ -25,8 +17,8 @@ type Fragment struct {
 }
 
 // Scale ...
-func (s Fragment) Scale() int64 {
-	return formatScale(s.scale)
+func (s Fragment) Scale() Scale {
+	return s.scale
 }
 
 // Sharpness ...
@@ -41,18 +33,9 @@ func (s Fragment) Output() string {
 
 func parseScale(scale int64) Scale {
 	if scale > 1080 {
-		return HighScale
+		return fftool.Scale1080P
 	} else if scale > 720 {
-		return MiddleScale
+		return fftool.Scale720P
 	}
-	return LowScale
-}
-
-func formatScale(scale Scale) int64 {
-	switch scale {
-	case 480, 1080:
-		return int64(scale)
-	default:
-		return 720
-	}
+	return fftool.Scale480P
 }
