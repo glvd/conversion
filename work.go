@@ -48,7 +48,6 @@ type WorkImpl struct {
 type Work struct {
 	ctx    context.Context
 	cancel context.CancelFunc
-	config *Config
 	*WorkImpl
 	WorkType string
 	Value    []byte
@@ -178,7 +177,6 @@ func defaultWork(options ...WorkOptions) *WorkImpl {
 
 func newWork(wt string, impl *WorkImpl, val []byte) *Work {
 	return &Work{
-		config:   fftool.DefaultConfig(),
 		WorkImpl: impl,
 		WorkType: wt,
 		Value:    val,
@@ -196,10 +194,6 @@ func (w Work) Status() WorkStatus {
 	return w.WorkImpl.Status
 }
 
-func (w Work) Config() Config {
-	return *w.config
-}
-
 func (w Work) slice(ctx context.Context, input string) (*Fragment, error) {
 	format, e := _ffprobe.StreamFormat(input)
 	//format, e := split.FFProbeStreamFormat(input)
@@ -209,12 +203,12 @@ func (w Work) slice(ctx context.Context, input string) (*Fragment, error) {
 	if !IsMedia(format) {
 		return nil, errors.New("file is not a video/audio")
 	}
+	cfg := fftool.DefaultConfig()
+	cfg.OutputPath = w.Output()
+	cfg.Scale = w.WorkImpl.Scale
 
-	w.config.OutputPath = w.Output()
-	w.config.Scale = w.Scale
-
-	sharpness := fmt.Sprintf("%dP", fftool.ScaleValue(w.Scale))
-	ff := fftool.NewFFMpeg(w.config)
+	sharpness := fmt.Sprintf("%dP", fftool.ScaleValue(w.WorkImpl.Scale))
+	ff := fftool.NewFFMpeg(cfg)
 
 	ff = ff.OptimizeWithFormat(format)
 
@@ -224,10 +218,8 @@ func (w Work) slice(ctx context.Context, input string) (*Fragment, error) {
 		return nil, Wrap(e)
 	}
 
-	cfg := ff.Config()
-
 	return &Fragment{
-		scale:     w.Scale,
+		scale:     cfg.Scale,
 		output:    cfg.ProcessPath(),
 		skip:      w.Skip,
 		input:     input,

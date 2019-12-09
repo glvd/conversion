@@ -48,7 +48,7 @@ func NewSourceWork(source *VideoPornSource, options ...WorkOptions) (IWork, erro
 		PosterPathOption(source.PosterPath),
 		ThumbPathOption(source.Thumb)}
 	opts = append(opts, options...)
-	work := newWork("source", defaultWork(options...), bys)
+	work := newWork("source", defaultWork(opts...), bys)
 	return work, nil
 }
 
