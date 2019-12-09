@@ -48,7 +48,7 @@ type WorkImpl struct {
 type Work struct {
 	ctx    context.Context
 	cancel context.CancelFunc
-	config Config
+	config *Config
 	*WorkImpl
 	WorkType string
 	Value    []byte
@@ -188,7 +188,7 @@ func (w Work) Status() WorkStatus {
 }
 
 func (w Work) Config() Config {
-	return w.config
+	return *w.config
 }
 
 func (w Work) slice(ctx context.Context, input string) (*Fragment, error) {
@@ -201,14 +201,15 @@ func (w Work) slice(ctx context.Context, input string) (*Fragment, error) {
 		return nil, errors.New("file is not a video/audio")
 	}
 
+	w.config.OutputPath = w.Output()
+	w.config.Scale = w.Scale
+
 	sharpness := fmt.Sprintf("%dP", fftool.ScaleValue(w.Scale))
-	ff := _ffmpeg.OptimizeWithFormat(format)
+	ff := fftool.NewFFMpeg(w.config)
+
+	ff = ff.OptimizeWithFormat(format)
 
 	e = ff.Run(ctx, input)
-	if e != nil {
-		return nil, e
-	}
-	//Output := filepath.Join(w.Output, UUID().String())
 	//sa, e := split.FFMpegSplitToM3U8(ctx, input, split.StreamFormatOption(format), split.ScaleOption(formatScale(w.Scale)), split.OutputOption(w.Output()), split.AutoOption(true))
 	if e != nil {
 		return nil, Wrap(e)
