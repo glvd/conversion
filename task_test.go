@@ -2,6 +2,8 @@ package conversion
 
 import (
 	"errors"
+	"github.com/glvd/go-fftool"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -17,6 +19,8 @@ func init() {
 	}
 	CachePath = "d:\\cache" //windows path test
 	RegisterCache()
+	fftool.DefaultCommandPath = filepath.Join(`D:\workspace\golang\project\go-fftool\bin`)
+	InitFFTool()
 }
 
 // TestTask_Start ...

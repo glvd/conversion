@@ -39,7 +39,7 @@ type VideoPornSource struct {
 
 // NewSourceWork ...
 func NewSourceWork(source *VideoPornSource, options ...WorkOptions) (IWork, error) {
-	bytes, e := json.Marshal(source)
+	bys, e := json.Marshal(source)
 	if e != nil {
 		return nil, e
 	}
@@ -48,13 +48,8 @@ func NewSourceWork(source *VideoPornSource, options ...WorkOptions) (IWork, erro
 		PosterPathOption(source.PosterPath),
 		ThumbPathOption(source.Thumb)}
 	opts = append(opts, options...)
-
-	Work := &Work{
-		WorkImpl: defaultWork(opts...),
-		WorkType: "source",
-		Value:    bytes,
-	}
-	return Work, nil
+	work := newWork("source", defaultWork(options...), bys)
+	return work, nil
 }
 
 func decodeSource(src []byte) (IVideo, error) {

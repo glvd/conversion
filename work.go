@@ -176,6 +176,15 @@ func defaultWork(options ...WorkOptions) *WorkImpl {
 	return impl
 }
 
+func newWork(wt string, impl *WorkImpl, val []byte) *Work {
+	return &Work{
+		config:   fftool.DefaultConfig(),
+		WorkImpl: impl,
+		WorkType: wt,
+		Value:    val,
+	}
+}
+
 // Reset ...
 func (w *Work) Reset() error {
 	w.WorkImpl.Status = WorkWaiting
@@ -214,9 +223,12 @@ func (w Work) slice(ctx context.Context, input string) (*Fragment, error) {
 	if e != nil {
 		return nil, Wrap(e)
 	}
+
+	cfg := ff.Config()
+
 	return &Fragment{
 		scale:     w.Scale,
-		output:    ff.Config().ProcessPath(),
+		output:    cfg.ProcessPath(),
 		skip:      w.Skip,
 		input:     input,
 		sharpness: sharpness,

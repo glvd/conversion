@@ -94,17 +94,13 @@ func (v VideoPornInfo) Video() *Video {
 
 // NewInfoWork ...
 func NewInfoWork(info *VideoPornInfo, options ...WorkOptions) (IWork, error) {
-	bytes, e := json.Marshal(info)
+	bys, e := json.Marshal(info)
 	if e != nil {
 		return nil, e
 	}
 
 	options = append(options, IDOption(info.ID))
-	work := &Work{
-		WorkImpl: defaultWork(options...),
-		WorkType: "info",
-		Value:    bytes,
-	}
+	work := newWork("info", defaultWork(options...), bys)
 
 	if work.ID() == "" {
 		return nil, ErrWorkID

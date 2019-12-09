@@ -178,12 +178,12 @@ func (t *Task) AddWorker(work IWork, force bool) error {
 	if e == nil {
 		if force {
 			if err := iwork.Reset(); err != nil {
-				return err
+				return Wrap(err, "add work force")
 			}
 		}
 	} else {
 		if err := work.Store(); err != nil {
-			return err
+			return Wrap(err, "add work store")
 		}
 	}
 	return t.StartWork(work.ID())
