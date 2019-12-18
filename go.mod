@@ -3,12 +3,12 @@ module github.com/glvd/conversion
 go 1.13
 
 require (
+	github.com/RichardKnop/machinery v1.7.2
 	github.com/glvd/cluster-api v0.0.0-20191030102933-aa5db0a840a0
 	github.com/glvd/go-fftool v0.0.2
-	github.com/glvd/split v0.0.0-20191016090256-29c9a846edf4
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/gocacher/badger-cache v0.0.3
-	github.com/gocacher/cacher v1.0.4
+	github.com/gocacher/cacher v1.0.5
 	github.com/godcong/go-trait v0.0.0-20190816072228-f216e906756e
 	github.com/google/uuid v1.1.1
 	github.com/gotrait/tool v0.0.1

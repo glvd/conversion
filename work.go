@@ -144,6 +144,13 @@ func SamplePathOption(path []string) WorkOptions {
 	}
 }
 
+// CryptoOption ...
+func CryptoOption(path []string) WorkOptions {
+	return func(impl *WorkImpl) {
+		impl.SamplePath = path
+	}
+}
+
 // ClearTempOption ...
 func ClearTempOption(b bool) WorkOptions {
 	return func(impl *WorkImpl) {
@@ -204,6 +211,7 @@ func (w Work) slice(ctx context.Context, input string) (*Fragment, error) {
 		return nil, errors.New("file is not a video/audio")
 	}
 	cfg := fftool.DefaultConfig()
+	cfg.SetSlice(true)
 	cfg.OutputPath = w.Output()
 	cfg.Scale = w.WorkImpl.Scale
 
