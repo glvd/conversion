@@ -215,7 +215,9 @@ func (w Work) slice(ctx context.Context, input string) (*Fragment, error) {
 	cfg.SetSlice(true)
 	cfg.OutputPath = w.Output()
 	cfg.Scale = w.WorkImpl.Scale
-
+	if w.Crypto != nil {
+		cfg.SetCrypt(*w.Crypto)
+	}
 	sharpness := fmt.Sprintf("%dP", fftool.ScaleValue(w.WorkImpl.Scale))
 	ff := fftool.NewFFMpeg(cfg)
 
