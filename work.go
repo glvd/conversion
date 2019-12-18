@@ -38,7 +38,7 @@ type WorkImpl struct {
 	PosterPath string
 	ThumbPath  string
 	SamplePath []string
-	Crypto     Crypto
+	Crypto     *Crypto
 	Scale      Scale
 	Output     string
 	Skip       []string
@@ -146,7 +146,7 @@ func SamplePathOption(path []string) WorkOptions {
 }
 
 // CryptoOption ...
-func CryptoOption(crypto Crypto) WorkOptions {
+func CryptoOption(crypto *Crypto) WorkOptions {
 	return func(impl *WorkImpl) {
 		impl.Crypto = crypto
 	}
@@ -206,7 +206,7 @@ func (w Work) slice(ctx context.Context, input string) (*Fragment, error) {
 	format, e := _ffprobe.StreamFormat(input)
 	//format, e := split.FFProbeStreamFormat(input)
 	if e != nil {
-		return nil, Wrap(e)
+		return nil, Wrap(e, "probe error")
 	}
 	if !IsMedia(format) {
 		return nil, errors.New("file is not a video/audio")
@@ -239,7 +239,7 @@ func (w Work) slice(ctx context.Context, input string) (*Fragment, error) {
 func (w Work) video() (IVideo, error) {
 	fn, b := WorkRunProcessFunction[w.WorkType]
 	if !b {
-		fn = dummy
+		return nil, errors.New("work type not found")
 	}
 	return fn(w.Value)
 }
