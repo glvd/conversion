@@ -38,6 +38,7 @@ type WorkImpl struct {
 	PosterPath string
 	ThumbPath  string
 	SamplePath []string
+	Crypto     Crypto
 	Scale      Scale
 	Output     string
 	Skip       []string
@@ -145,9 +146,9 @@ func SamplePathOption(path []string) WorkOptions {
 }
 
 // CryptoOption ...
-func CryptoOption(path []string) WorkOptions {
+func CryptoOption(crypto Crypto) WorkOptions {
 	return func(impl *WorkImpl) {
-		impl.SamplePath = path
+		impl.Crypto = crypto
 	}
 }
 

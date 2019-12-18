@@ -7,6 +7,9 @@ import (
 // Scale ...
 type Scale = fftool.Scale
 
+// Crypto ...
+type Crypto = fftool.Crypto
+
 // Config ...
 type Config = fftool.Config
 
