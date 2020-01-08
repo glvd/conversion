@@ -57,3 +57,8 @@ func (s *Service) NewWorker() {
 func (s *Service) HandleWorker() error {
 	return <-s.err
 }
+
+// AddTask ...
+func (s *Service) AddTask(name string, val interface{}) error {
+	return s.serv.RegisterTask(name, val)
+}
