@@ -23,7 +23,7 @@ func NewService() *Service {
 		var cfg = &config.Config{
 			Broker:        "amqp://guest:guest@localhost:5672/",
 			DefaultQueue:  "machinery_tasks",
-			ResultBackend: "amqp://guest:guest@localhost:5672/",
+			ResultBackend: "redis://localhost:6379",
 			AMQP: &config.AMQPConfig{
 				Exchange:     "machinery_exchange",
 				ExchangeType: "direct",
