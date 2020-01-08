@@ -10,6 +10,7 @@ import (
 type Service struct {
 	Name string
 	Task int
+	err  chan error
 	serv *machinery.Server
 }
 
@@ -37,6 +38,7 @@ func NewService() *Service {
 		_service = &Service{
 			Name: "work_conversion",
 			Task: 1,
+			err:  make(chan error),
 			serv: server,
 		}
 	})
@@ -45,7 +47,13 @@ func NewService() *Service {
 }
 
 // NewWorker ...
-func (s *Service) NewWorker() error {
+func (s *Service) NewWorker() {
 	worker := s.serv.NewWorker(s.Name, s.Task)
-	return worker.Launch()
+	worker.LaunchAsync(s.err)
+	return
+}
+
+// HandleWorker ...
+func (s *Service) HandleWorker() error {
+	return <-s.err
 }
