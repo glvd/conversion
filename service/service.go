@@ -8,6 +8,8 @@ import (
 
 // Service ...
 type Service struct {
+	Name string
+	Task int
 	serv *machinery.Server
 }
 
@@ -32,17 +34,18 @@ func NewService() *Service {
 		if err != nil {
 			return
 		}
-		_service = &Service{serv: server}
+		_service = &Service{
+			Name: "work_conversion",
+			Task: 1,
+			serv: server,
+		}
 	})
 
 	return _service
 }
 
 // NewWorker ...
-func (s *Service) NewWorker() {
-	worker := s.serv.NewWorker("work_conversion", 1)
-	err := worker.Launch()
-	if err != nil {
-		// do something with the error
-	}
+func (s *Service) NewWorker() error {
+	worker := s.serv.NewWorker(s.Name, s.Task)
+	return worker.Launch()
 }
