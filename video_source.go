@@ -11,8 +11,8 @@ type Extend struct {
 	Message string `json:"message"`
 }
 
-// VideoPornSource ...
-type VideoPornSource struct {
+// VideoSource ...
+type VideoSource struct {
 	Bangumi    string    `json:"bangumi"`     //番号 no
 	VideoPath  []string  `json:"video_path"`  //视频地址
 	SourceHash string    `json:"source_hash"` //原片hash
@@ -38,7 +38,7 @@ type VideoPornSource struct {
 }
 
 // NewSourceWork ...
-func NewSourceWork(source *VideoPornSource, options ...WorkOptions) (IWork, error) {
+func NewSourceWork(source *VideoSource, options ...WorkOptions) (IWork, error) {
 	bys, e := json.Marshal(source)
 	if e != nil {
 		return nil, e
@@ -53,7 +53,7 @@ func NewSourceWork(source *VideoPornSource, options ...WorkOptions) (IWork, erro
 }
 
 func decodeSource(src []byte) (IVideo, error) {
-	var source VideoPornSource
+	var source VideoSource
 	e := json.Unmarshal(src, &source)
 	if e != nil {
 		return nil, e
@@ -80,7 +80,7 @@ func VideoFromSource(Work *Work) (IVideo, error) {
 }
 
 // Video ...
-func (v VideoPornSource) Video() *Video {
+func (v VideoSource) Video() *Video {
 	//always not null
 	alias := ""
 	if len(v.Alias) > 0 {
